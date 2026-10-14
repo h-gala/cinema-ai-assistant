@@ -7,7 +7,10 @@ cinema-ai-assistant/
 └── docs/
     └── vision.md
 ```
+
 ## Autorzy
 - Natalia Bakalarska
 - Zofia Cymerys
 - Helena Gala
+
+**Grupa:** 2
