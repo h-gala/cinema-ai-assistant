@@ -1,0 +1,230 @@
+{
+  "id": "catalog-2026-W45",
+  "week": "2026-W45",
+  "date_from": "2026-11-02",
+  "date_to": "2026-11-08",
+  "timezone": "Europe/Warsaw",
+  "status": "test",
+  "screenings": [
+    {
+      "id": "scr-001",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-project-hail-mary",
+      "datetime": "2026-11-02T12:15:00+01:00",
+      "auditorium": "Sala 1",
+      "language": "pl",
+      "version": "napisy",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-002",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-toy-story-5",
+      "datetime": "2026-11-02T13:00:00+01:00",
+      "auditorium": "Sala 4",
+      "language": "pl",
+      "version": "dubbing",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-003",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-spider-man",
+      "datetime": "2026-11-02T16:30:00+01:00",
+      "auditorium": "Sala 2",
+      "language": "pl",
+      "version": "napisy",
+      "format": "3D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-004",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-odyssey",
+      "datetime": "2026-11-02T19:15:00+01:00",
+      "auditorium": "Sala 1",
+      "language": "pl",
+      "version": "napisy",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-005",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-godzilla-minus-zero",
+      "datetime": "2026-11-03T18:00:00+01:00",
+      "auditorium": "Sala 3",
+      "language": "pl",
+      "version": "napisy",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-006",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-christmas-recipe",
+      "datetime": "2026-11-03T15:30:00+01:00",
+      "auditorium": "Sala 5",
+      "language": "pl",
+      "version": "dubbing",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-007",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-project-hail-mary",
+      "datetime": "2026-11-04T20:00:00+01:00",
+      "auditorium": "Sala 1",
+      "language": "en",
+      "version": "napisy",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-008",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-toy-story-5",
+      "datetime": "2026-11-04T11:00:00+01:00",
+      "auditorium": "Sala 4",
+      "language": "pl",
+      "version": "dubbing",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-009",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-spider-man",
+      "datetime": "2026-11-05T17:45:00+01:00",
+      "auditorium": "Sala 2",
+      "language": "pl",
+      "version": "napisy",
+      "format": "3D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-010",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-odyssey",
+      "datetime": "2026-11-05T19:00:00+01:00",
+      "auditorium": "Sala 1",
+      "language": "pl",
+      "version": "napisy",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-011",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-godzilla-minus-zero",
+      "datetime": "2026-11-06T14:00:00+01:00",
+      "auditorium": "Sala 3",
+      "language": "pl",
+      "version": "napisy",
+      "format": "2D",
+      "is_premiere": true
+    },
+    {
+      "id": "scr-012",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-godzilla-minus-zero",
+      "datetime": "2026-11-06T18:30:00+01:00",
+      "auditorium": "Sala 1",
+      "language": "pl",
+      "version": "napisy",
+      "format": "3D",
+      "is_premiere": true
+    },
+    {
+      "id": "scr-013",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-christmas-recipe",
+      "datetime": "2026-11-06T16:00:00+01:00",
+      "auditorium": "Sala 5",
+      "language": "pl",
+      "version": "dubbing",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-014",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-project-hail-mary",
+      "datetime": "2026-11-07T20:15:00+01:00",
+      "auditorium": "Sala 1",
+      "language": "pl",
+      "version": "napisy",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-015",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-toy-story-5",
+      "datetime": "2026-11-08T10:30:00+01:00",
+      "auditorium": "Sala 4",
+      "language": "pl",
+      "version": "dubbing",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-016",
+      "cinema_id": "multikino-wola-park",
+      "movie_id": "movie-toy-story-5",
+      "datetime": "2026-11-02T12:00:00+01:00",
+      "auditorium": "Sala 2",
+      "language": "pl",
+      "version": "dubbing",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-017",
+      "cinema_id": "multikino-targowek",
+      "movie_id": "movie-spider-man",
+      "datetime": "2026-11-03T19:00:00+01:00",
+      "auditorium": "Sala 6",
+      "language": "pl",
+      "version": "napisy",
+      "format": "3D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-018",
+      "cinema_id": "cinema-city-arkadia",
+      "movie_id": "movie-project-hail-mary",
+      "datetime": "2026-11-04T18:15:00+01:00",
+      "auditorium": "Sala 7",
+      "language": "pl",
+      "version": "napisy",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-019",
+      "cinema_id": "cinema-city-promenada",
+      "movie_id": "movie-christmas-recipe",
+      "datetime": "2026-11-06T17:00:00+01:00",
+      "auditorium": "Sala 2",
+      "language": "pl",
+      "version": "dubbing",
+      "format": "2D",
+      "is_premiere": false
+    },
+    {
+      "id": "scr-020",
+      "cinema_id": "cinema-city-kinepolis",
+      "movie_id": "movie-odyssey",
+      "datetime": "2026-11-07T19:30:00+01:00",
+      "auditorium": "Sala 5",
+      "language": "pl",
+      "version": "napisy",
+      "format": "2D",
+      "is_premiere": false
+    }
+  ]
+}

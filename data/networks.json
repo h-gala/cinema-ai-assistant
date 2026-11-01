@@ -1,0 +1,14 @@
+{
+  "networks": [
+    {
+      "id": "cinema-city",
+      "name": "Cinema City",
+      "slug": "cinema-city"
+    },
+    {
+      "id": "multikino",
+      "name": "Multikino",
+      "slug": "multikino"
+    }
+  ]
+}

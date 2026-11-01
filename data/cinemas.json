@@ -1,0 +1,582 @@
+
+{
+  "cinemas": [
+    {
+      "id": "cinema-city-arkadia",
+      "network_id": "cinema-city",
+      "name": "Cinema City Arkadia",
+      "city": "Warszawa",
+      "address": {
+        "street": "Al. Jana Pawła II 82",
+        "postal_code": "00-175",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-promenada",
+      "network_id": "cinema-city",
+      "name": "Cinema City Promenada",
+      "city": "Warszawa",
+      "address": {
+        "street": "ul. Ostrobramska 75c",
+        "postal_code": "04-175",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-sadyba",
+      "network_id": "cinema-city",
+      "name": "Cinema City Sadyba",
+      "city": "Warszawa",
+      "address": {
+        "street": "ul. Powsińska 31",
+        "postal_code": "02-903",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-zakopianka",
+      "network_id": "cinema-city",
+      "name": "Cinema City Zakopianka",
+      "city": "Kraków",
+      "address": {
+        "street": "ul. Zakopiańska 62",
+        "postal_code": "30-418",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-galeria-kazimierz",
+      "network_id": "cinema-city",
+      "name": "Cinema City Galeria Kazimierz",
+      "city": "Kraków",
+      "address": {
+        "street": "ul. Podgórska 34",
+        "postal_code": "31-536",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-punkt-44",
+      "network_id": "cinema-city",
+      "name": "Cinema City Punkt 44",
+      "city": "Katowice",
+      "address": {
+        "street": "ul. Gliwicka 44",
+        "postal_code": "40-853",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-wolnosc",
+      "network_id": "cinema-city",
+      "name": "Cinema City Wolność",
+      "city": "Częstochowa",
+      "address": {
+        "street": "Al. Kościuszki 5",
+        "postal_code": "42-200",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-bytom",
+      "network_id": "cinema-city",
+      "name": "Cinema City Bytom",
+      "city": "Bytom",
+      "address": {
+        "street": "Pl. Kościuszki 1",
+        "postal_code": "41-902",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-poznan-plaza",
+      "network_id": "cinema-city",
+      "name": "Cinema City Poznań Plaza",
+      "city": "Poznań",
+      "address": {
+        "street": "ul. K. Drużbickiego 2",
+        "postal_code": "61-693",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-kinepolis",
+      "network_id": "cinema-city",
+      "name": "Cinema City Kinepolis",
+      "city": "Poznań",
+      "address": {
+        "street": "ul. B. Krzywoustego 72",
+        "postal_code": "61-144",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-rybnik-plaza",
+      "network_id": "cinema-city",
+      "name": "Cinema City Rybnik Plaza",
+      "city": "Rybnik",
+      "address": {
+        "street": "ul. Raciborska 16",
+        "postal_code": "44-200",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-manufaktura",
+      "network_id": "cinema-city",
+      "name": "Cinema City Manufaktura",
+      "city": "Łódź",
+      "address": {
+        "street": "ul. Drewnowska 58",
+        "postal_code": "91-002",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-torun-plaza",
+      "network_id": "cinema-city",
+      "name": "Cinema City Toruń Plaza",
+      "city": "Toruń",
+      "address": {
+        "street": "ul. Broniewskiego 90",
+        "postal_code": "87-100",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-krewetka",
+      "network_id": "cinema-city",
+      "name": "Cinema City Krewetka",
+      "city": "Gdańsk",
+      "address": {
+        "street": "ul. Karmelicka 1",
+        "postal_code": "80-851",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-lublin",
+      "network_id": "cinema-city",
+      "name": "Cinema City Lublin",
+      "city": "Lublin",
+      "address": {
+        "street": "ul. Lipowa 13",
+        "postal_code": "20-020",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-korona",
+      "network_id": "cinema-city",
+      "name": "Cinema City Korona",
+      "city": "Wrocław",
+      "address": {
+        "street": "ul. B. Krzywoustego 126c",
+        "postal_code": "51-421",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-bydgoszcz",
+      "network_id": "cinema-city",
+      "name": "Cinema City Bydgoszcz",
+      "city": "Bydgoszcz",
+      "address": {
+        "street": "ul. Jagiellońska 39-47",
+        "postal_code": "85-052",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-zielona-gora",
+      "network_id": "cinema-city",
+      "name": "Cinema City Zielona Góra",
+      "city": "Zielona Góra",
+      "address": {
+        "street": "ul. Wrocławska 17",
+        "postal_code": "65-427",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-bielsko-biala",
+      "network_id": "cinema-city",
+      "name": "Cinema City Bielsko Biała",
+      "city": "Bielsko-Biała",
+      "address": {
+        "street": "ul. Leszczyńska 20",
+        "postal_code": "43-300",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "cinema-city-walbrzych",
+      "network_id": "cinema-city",
+      "name": "Cinema City Wałbrzych",
+      "city": "Wałbrzych",
+      "address": {
+        "street": "ul. 1 Maja 64",
+        "postal_code": "58-300",
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "kino-bydgoszcz-focha",
+      "network_id": null,
+      "name": null,
+      "city": "Bydgoszcz",
+      "address": {
+        "street": "ul. Marszałka Focha 48",
+        "postal_code": null,
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "kino-czechowice-dziedzice",
+      "network_id": null,
+      "name": null,
+      "city": "Czechowice-Dziedzice",
+      "address": null,
+      "location": "Stara Kablownia"
+    },
+    {
+      "id": "kino-elblag",
+      "network_id": null,
+      "name": null,
+      "city": "Elbląg",
+      "address": null,
+      "location": "Centrum Handlowe Ogrody"
+    },
+    {
+      "id": "kino-gdansk-zwyciestwa",
+      "network_id": null,
+      "name": null,
+      "city": "Gdańsk",
+      "address": {
+        "street": "al. Zwycięstwa 14",
+        "postal_code": null,
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "kino-glogow",
+      "network_id": null,
+      "name": null,
+      "city": "Głogów",
+      "address": null,
+      "location": "Galeria Glogovia"
+    },
+    {
+      "id": "kino-gorzow-wielkopolski",
+      "network_id": null,
+      "name": null,
+      "city": "Gorzów Wielkopolski",
+      "address": null,
+      "location": "Centrum Handlowe Feeria"
+    },
+    {
+      "id": "kino-jaworzno",
+      "network_id": null,
+      "name": null,
+      "city": "Jaworzno",
+      "address": null,
+      "location": "Galeria Galena"
+    },
+    {
+      "id": "kino-kalisz",
+      "network_id": null,
+      "name": null,
+      "city": "Kalisz",
+      "address": null,
+      "location": "Galeria Tęcza"
+    },
+    {
+      "id": "kino-katowice-galeria",
+      "network_id": null,
+      "name": null,
+      "city": "Katowice",
+      "address": null,
+      "location": "Galeria Katowicka"
+    },
+    {
+      "id": "kino-kielce",
+      "network_id": null,
+      "name": null,
+      "city": "Kielce",
+      "address": null,
+      "location": "Galeria Korona"
+    },
+    {
+      "id": "kino-klodzko",
+      "network_id": null,
+      "name": null,
+      "city": "Kłodzko",
+      "address": null,
+      "location": "Galeria Twierdza Kłodzko"
+    },
+    {
+      "id": "kino-koszalin",
+      "network_id": null,
+      "name": null,
+      "city": "Koszalin",
+      "address": null,
+      "location": "Forum Koszalin"
+    },
+    {
+      "id": "kino-krakow-dobrego-pasterza",
+      "network_id": null,
+      "name": null,
+      "city": "Kraków",
+      "address": {
+        "street": "ul. Dobrego Pasterza 128",
+        "postal_code": null,
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "kino-leszno",
+      "network_id": null,
+      "name": null,
+      "city": "Leszno",
+      "address": null,
+      "location": "Galeria Leszno"
+    },
+    {
+      "id": "kino-lublin-olimp",
+      "network_id": null,
+      "name": null,
+      "city": "Lublin",
+      "address": {
+        "street": "aleja Spółdzielczości Pracy 34",
+        "postal_code": null,
+        "country": "PL"
+      },
+      "location": "Galeria Olimp"
+    },
+    {
+      "id": "kino-lodz-pilsudskiego",
+      "network_id": null,
+      "name": null,
+      "city": "Łódź",
+      "address": {
+        "street": "al. marsz. Józefa Piłsudskiego 5",
+        "postal_code": null,
+        "country": "PL"
+      },
+      "location": null,
+      "notes": "Do lutego 2018 funkcjonowało jako Silver Screen; kino zostało wyremontowane."
+    },
+    {
+      "id": "kino-mielec",
+      "network_id": null,
+      "name": null,
+      "city": "Mielec",
+      "address": null,
+      "location": "Galeria Navigator"
+    },
+    {
+      "id": "kino-olsztyn",
+      "network_id": null,
+      "name": null,
+      "city": "Olsztyn",
+      "address": null,
+      "location": "Galeria Warmińska"
+    },
+    {
+      "id": "kino-poznan-stary-browar",
+      "network_id": null,
+      "name": null,
+      "city": "Poznań",
+      "address": null,
+      "location": "Stary Browar"
+    },
+    {
+      "id": "kino-pruszkow",
+      "network_id": null,
+      "name": null,
+      "city": "Pruszków",
+      "address": null,
+      "location": "Centrum Handlowe Nowa Stacja"
+    },
+    {
+      "id": "kino-radom",
+      "network_id": null,
+      "name": null,
+      "city": "Radom",
+      "address": null,
+      "location": "Galeria Słoneczna"
+    },
+    {
+      "id": "kino-rumia",
+      "network_id": null,
+      "name": null,
+      "city": "Rumia",
+      "address": null,
+      "location": "Galeria Rumia"
+    },
+    {
+      "id": "kino-rybnik-focus",
+      "network_id": null,
+      "name": null,
+      "city": "Rybnik",
+      "address": null,
+      "location": "Focus Mall"
+    },
+    {
+      "id": "kino-rzeszow",
+      "network_id": null,
+      "name": null,
+      "city": "Rzeszów",
+      "address": null,
+      "location": "Millenium Hall"
+    },
+    {
+      "id": "kino-slupsk",
+      "network_id": null,
+      "name": null,
+      "city": "Słupsk",
+      "address": null,
+      "location": "Centrum Handlowe Jantar"
+    },
+    {
+      "id": "kino-szczecin",
+      "network_id": null,
+      "name": null,
+      "city": "Szczecin",
+      "address": null,
+      "location": "Centrum Handlowe Galaxy"
+    },
+    {
+      "id": "kino-swidnica",
+      "network_id": null,
+      "name": null,
+      "city": "Świdnica",
+      "address": null,
+      "location": "Galeria Świdnicka"
+    },
+    {
+      "id": "kino-tarnow",
+      "network_id": null,
+      "name": null,
+      "city": "Tarnów",
+      "address": null,
+      "location": "Galeria Tarnovia"
+    },
+    {
+      "id": "kino-tychy",
+      "network_id": null,
+      "name": null,
+      "city": "Tychy",
+      "address": null,
+      "location": "Gemini Park Tychy"
+    },
+    {
+      "id": "kino-warszawa-atrium-reduta",
+      "network_id": null,
+      "name": "Atrium Reduta",
+      "city": "Warszawa",
+      "address": null,
+      "location": "Atrium Reduta"
+    },
+    {
+      "id": "multikino-zlote-tarasy",
+      "network_id": "multikino",
+      "name": "Multikino Złote Tarasy",
+      "city": "Warszawa",
+      "address": {
+        "street": "ul. Złota 59",
+        "postal_code": "00-120",
+        "country": "PL"
+      },
+      "location": "Złote Tarasy"
+    },
+    {
+      "id": "multikino-wola-park",
+      "network_id": "multikino",
+      "name": "Multikino Wola Park",
+      "city": "Warszawa",
+      "address": null,
+      "location": "Wola Park"
+    },
+    {
+      "id": "multikino-targowek",
+      "network_id": "multikino",
+      "name": "Multikino Targówek",
+      "city": "Warszawa",
+      "address": null,
+      "location": "Targówek"
+    },
+    {
+      "id": "multikino-galeria-mlociny",
+      "network_id": "multikino",
+      "name": "Multikino Galeria Młociny",
+      "city": "Warszawa",
+      "address": null,
+      "location": "Galeria Młociny"
+    },
+    {
+      "id": "kino-wloclawek",
+      "network_id": null,
+      "name": null,
+      "city": "Włocławek",
+      "address": {
+        "street": "ul. Pułaskiego 10-12",
+        "postal_code": null,
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "kino-wroclaw-pasaz-grunwaldzki",
+      "network_id": null,
+      "name": null,
+      "city": "Wrocław",
+      "address": null,
+      "location": "Pasaż Grunwaldzki"
+    },
+    {
+      "id": "kino-zabrze",
+      "network_id": null,
+      "name": null,
+      "city": "Zabrze",
+      "address": {
+        "street": "ul. Gdańska 18",
+        "postal_code": null,
+        "country": "PL"
+      },
+      "location": null
+    },
+    {
+      "id": "kino-zgorzelec",
+      "network_id": null,
+      "name": null,
+      "city": "Zgorzelec",
+      "address": null,
+      "location": "CHR Plaza"
+    }
+  ]
+}
