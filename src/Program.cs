@@ -12,7 +12,7 @@ using OpenAI.Chat;
 
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
-// Użycie: dotnet run -- [--model qwen3:4b] --user anna [--ask "Znajdź horror na piątek wieczór"]
+// Użycie: dotnet run -- [--provider openai|ollama] [--model qwen3:4b] --user anna [--ask "Znajdź horror na piątek wieczór"]
 string? Arg(string name) { var i = Array.IndexOf(args, name); return i >= 0 && i + 1 < args.Length ? args[i + 1] : null; }
 
 var cfg = new ConfigurationBuilder()
@@ -111,7 +111,7 @@ var agent = new AgentLoop(chat, tools, agentOpt, blockedMovieTitles);
 
 var history = new List<ChatMessage> { new(ChatRole.System, SystemPrompt.Build(user, now, agentOpt.EnforceAgeRating)) };
 
-Console.WriteLine($"Użytkownik: {user.Name} | model: {ollama.Model} | teraz: {now:yyyy-MM-dd HH:mm}");
+Console.WriteLine($"Użytkownik: {user.Name} | model: {activeModel} | teraz: {now:yyyy-MM-dd HH:mm}");
 
 async Task Ask(string q)
 {
