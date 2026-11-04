@@ -21,7 +21,7 @@ public sealed class CinemaTools(CinemaRepository repo, UserProfile user, DateTim
     };
     public IReadOnlyList<AIFunction> CreateAll() =>
         new[] { nameof(FindCinemas), nameof(SearchMovies), nameof(GetScreenings),
-                nameof(GetUserProfile), nameof(RecommendScreenings) }
+                nameof(GetUserProfile) }
         .Select(n => AIFunctionFactory.Create(
             typeof(CinemaTools).GetMethod(n)!, this,
             new AIFunctionFactoryOptions { Name = Regex.Replace(n, "(?<!^)([A-Z])", "_$1").ToLowerInvariant() }))
@@ -88,48 +88,7 @@ public sealed class CinemaTools(CinemaRepository repo, UserProfile user, DateTim
     [Description("Returns the profile of the current user: age, favourite and disliked genres, preferences.")]
     public UserProfile GetUserProfile() => user;
 
-    [Description("Recommend screenings for the CURRENT user. The app scores them by the user's profile " +
-                 "(favourite genres, age limit, preferred network and time of day) and excludes disliked genres.")]
-    public object RecommendScreenings(
-        [Description("Date yyyy-MM-dd")] string? dateFrom = null,
-        [Description("Date yyyy-MM-dd (inclusive); defaults to dateFrom")] string? dateTo = null,
-        [Description("Cinema name fragment")] string? cinema = null,
-        [Description("Earliest start time HH:mm")] string? timeFrom = null,
-        [Description("Latest start time HH:mm")] string? timeTo = null)
-    {
-        var filter = BuildFilter(cinema, null, null, dateFrom, dateTo, timeFrom, timeTo);
-        var picks = repo.QueryScreenings(filter, now)
-            .Where(s => !s.Genres.Any(g => user.DislikedGenres.Contains(g, StringComparer.OrdinalIgnoreCase)))
-            .Where(s => ParseAge(s.AgeRating) <= user.Age)
-            .Select(s => (View: s, Score: Score(s)))
-            .Where(x => x.Score.Points > 0)
-            .OrderByDescending(x => x.Score.Points).ThenBy(x => x.View.Start)
-            .Take(5)
-            .Select(x => new { x.Score.Points, Why = x.Score.Reasons, Screening = x.View })
-            .ToList();
-        return new { forUser = user.Name, recommendations = picks };
-    }
-
     // ---- logika pomocnicza ----
-
-    (int Points, List<string> Reasons) Score(ScreeningView s)
-    {
-        int pts = 0; var why = new List<string>();
-        foreach (var g in s.Genres.Where(g => user.FavoriteGenres.Contains(g, StringComparer.OrdinalIgnoreCase)))
-        { pts += 3; why.Add($"ulubiony gatunek: {g}"); }
-
-        var cinema = repo.Cinemas.First(c => c.Id == s.CinemaId);
-        if (user.PreferredNetworkId == cinema.NetworkId) { pts += 1; why.Add("preferowana sieć kin"); }
-
-        var hour = int.Parse(s.Start.Substring(11, 2));
-        var part = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
-        if (user.PreferredPartOfDay == part) { pts += 1; why.Add("preferowana pora dnia"); }
-        if (s.IsPremiere) { pts += 1; why.Add("premiera"); }
-        return (pts, why);
-    }
-
-    static int ParseAge(string rating) =>
-        int.TryParse(new string(rating.Where(char.IsDigit).ToArray()), out var a) ? a : 0;
 
     static ScreeningFilter BuildFilter(string? cinema, string? title, string? genre,
         string? dateFrom, string? dateTo, string? timeFrom, string? timeTo)
