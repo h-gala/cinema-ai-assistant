@@ -5,6 +5,7 @@ using CinemaAgent.Users;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using OllamaSharp;
+using System.Text.Json;
 
 // Użycie: dotnet run -- --user anna [--ask "Znajdź horror na piątek wieczór"]
 string? Arg(string name) { var i = Array.IndexOf(args, name); return i >= 0 && i + 1 < args.Length ? args[i + 1] : null; }
@@ -26,16 +27,52 @@ if (!UserProfiles.All.TryGetValue(userId, out var user))
     return 1;
 }
 
+// Ollama nie zgłasza błędu o brakującym modelu aż do pierwszego zapytania.
+// Sprawdź lokalny katalog /api/tags przed uruchomieniem pętli agenta.
+using (var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) })
+{
+    try
+    {
+        var tagsUri = new Uri($"{ollama.Endpoint.TrimEnd('/')}/api/tags");
+        using var response = await http.GetAsync(tagsUri);
+        response.EnsureSuccessStatusCode();
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var models = json.RootElement.GetProperty("models").EnumerateArray()
+            .Select(m => m.GetProperty("name").GetString())
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .ToList();
+        static string NormalizeModelName(string name) =>
+            name.EndsWith(":latest", StringComparison.OrdinalIgnoreCase) ? name[..^7] : name;
+
+        if (!models.Any(name => string.Equals(NormalizeModelName(name!), NormalizeModelName(ollama.Model), StringComparison.OrdinalIgnoreCase)))
+        {
+            Console.Error.WriteLine($"Brak modelu Ollama '{ollama.Model}'. Pobierz go poleceniem: ollama pull {ollama.Model}");
+            return 1;
+        }
+    }
+    catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException)
+    {
+        Console.Error.WriteLine($"Nie można sprawdzić modelu Ollama pod adresem '{ollama.Endpoint}': {ex.Message}");
+        Console.Error.WriteLine("Upewnij się, że Ollama działa i udostępnia endpoint /api/tags.");
+        return 1;
+    }
+}
+
 var now = agentOpt.Now is not null ? DateTimeOffset.Parse(agentOpt.Now) : DateTimeOffset.Now;
 var repo = new CinemaRepository(dataDir);
 Console.WriteLine($"Dane: {repo.Cinemas.Count} kin, {repo.Movies.Count} filmów, {repo.Screenings.Count} seansów");
-var tools = new CinemaTools(repo, user, now).CreateAll();
+var tools = new CinemaTools(repo, user, now, agentOpt.EnforceAgeRating).CreateAll();
 
 // Zmiana dostawcy modelu = podmiana implementacji IChatClient
 IChatClient chat = new OllamaApiClient(new Uri(ollama.Endpoint), ollama.Model);
-var agent = new AgentLoop(chat, tools, agentOpt);
+var blockedMovieTitles = agentOpt.EnforceAgeRating
+    ? repo.Movies.Where(m => !AgeRatingPolicy.IsAllowed(m.AgeRating, user.Age))
+        .SelectMany(m => new[] { m.Title, m.OriginalTitle })
+        .Where(title => !string.IsNullOrWhiteSpace(title)).Select(title => title!).Distinct(StringComparer.OrdinalIgnoreCase).ToList()
+    : new List<string>();
+var agent = new AgentLoop(chat, tools, agentOpt, blockedMovieTitles);
 
-var history = new List<ChatMessage> { new(ChatRole.System, SystemPrompt.Build(user, now)) };
+var history = new List<ChatMessage> { new(ChatRole.System, SystemPrompt.Build(user, now, agentOpt.EnforceAgeRating)) };
 
 Console.WriteLine($"Użytkownik: {user.Name} | model: {ollama.Model} | teraz: {now:yyyy-MM-dd HH:mm}");
 
