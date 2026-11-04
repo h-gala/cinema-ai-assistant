@@ -25,4 +25,5 @@ public record ScreeningView(
 public record UserProfile(
     string Id, string Name, int Age,
     string[] FavoriteGenres, string[] DislikedGenres,
-    string? PreferredNetworkId, string? PreferredPartOfDay);
+    string? PreferredNetworkId, string? PreferredPartOfDay,
+    string Description);

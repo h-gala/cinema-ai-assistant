@@ -10,7 +10,7 @@ namespace CinemaAgent.Tools;
 /// Narzędzia udostępnione modelowi. Każda metoda to jedno narzędzie.
 /// Błędne argumenty kończą się wyjątkiem - pętla agenta zwraca go modelowi jako błąd narzędzia.
 /// </summary>
-public sealed class CinemaTools(CinemaRepository repo, UserProfile user, DateTimeOffset now)
+public sealed class CinemaTools(CinemaRepository repo, UserProfile user, DateTimeOffset now, bool enforceAgeRating)
 {
     object CinemaNotFound(string query) => new
     {
@@ -57,7 +57,7 @@ public sealed class CinemaTools(CinemaRepository repo, UserProfile user, DateTim
     public object SearchMovies(
         [Description("Part of the title (Polish or original)")] string? title = null,
         [Description("Genre, e.g. Horror, Komedia, Sci-Fi, Animacja")] string? genre = null) =>
-        repo.FindMovies(title, genre).Select(m => new
+        repo.FindMovies(title, genre).Where(IsAllowedForUser).Select(m => new
         { m.Id, m.Title, m.Year, m.DurationMinutes, m.Genres, m.AgeRating, m.Description }).ToList();
 
     [Description("List upcoming screenings (starting from the current time), sorted chronologically. " +
@@ -76,7 +76,9 @@ public sealed class CinemaTools(CinemaRepository repo, UserProfile user, DateTim
         var filter = BuildFilter(cinema, title, genre, dateFrom, dateTo, timeFrom, timeTo);
         if (!string.IsNullOrWhiteSpace(cinema) && !repo.FindCinemas(cinema).Any())
     return CinemaNotFound(cinema);
-        var all = repo.QueryScreenings(filter, now).ToList();
+        var all = repo.QueryScreenings(filter, now)
+            .Where(s => !enforceAgeRating || AgeRatingPolicy.IsAllowed(s.AgeRating, user.Age))
+            .ToList();
         return new
         {
             total = all.Count,
@@ -87,6 +89,9 @@ public sealed class CinemaTools(CinemaRepository repo, UserProfile user, DateTim
 
     [Description("Returns the profile of the current user: age, favourite and disliked genres, preferences.")]
     public UserProfile GetUserProfile() => user;
+
+    bool IsAllowedForUser(Movie movie) =>
+        !enforceAgeRating || AgeRatingPolicy.IsAllowed(movie.AgeRating, user.Age);
 
     // ---- logika pomocnicza ----
 
@@ -108,4 +113,21 @@ public sealed class CinemaTools(CinemaRepository repo, UserProfile user, DateTim
         string.IsNullOrWhiteSpace(s) ? null
         : TimeOnly.TryParseExact(s, "HH:mm", out var t) ? t
         : throw new ArgumentException($"{name} must be in HH:mm format, got '{s}'");
+}
+
+/// <summary>Known rating labels are compared numerically; unknown labels fail closed.</summary>
+internal static class AgeRatingPolicy
+{
+    public static bool IsAllowed(string? rating, int userAge)
+    {
+        if (string.Equals(rating?.Trim(), "BO", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var value = rating?.Trim();
+        if (value is null || !value.EndsWith('+') ||
+            !int.TryParse(value[..^1].Trim(), out var minimumAge))
+            return false;
+
+        return userAge >= minimumAge;
+    }
 }

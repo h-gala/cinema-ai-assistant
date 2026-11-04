@@ -16,4 +16,6 @@ public class AgentOptions
     public string? Now { get; set; }
     /// <summary>Pokazuje wywołania narzędzi, wyniki i pełne błędy. Na produkcji wyłączone.</summary>
     public bool Debug { get; set; } = false;
+    /// <summary>Odfiltrowuje filmy z kategorią wiekową wyższą niż wiek użytkownika.</summary>
+    public bool EnforceAgeRating { get; set; } = false;
 }
