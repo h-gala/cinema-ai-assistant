@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using OllamaSharp;
 using System.Text.Json;
 
-// Użycie: dotnet run -- --user anna [--ask "Znajdź horror na piątek wieczór"]
+// Użycie: dotnet run -- [--model qwen3:4b] --user anna [--ask "Znajdź horror na piątek wieczór"]
 string? Arg(string name) { var i = Array.IndexOf(args, name); return i >= 0 && i + 1 < args.Length ? args[i + 1] : null; }
 
 var cfg = new ConfigurationBuilder()
@@ -19,6 +19,11 @@ var cfg = new ConfigurationBuilder()
 var ollama = cfg.GetSection("Ollama").Get<OllamaOptions>() ?? new();
 var agentOpt = cfg.GetSection("Agent").Get<AgentOptions>() ?? new();
 var dataDir = cfg["DataDirectory"] ?? "data";
+
+if (Arg("--model") is { } model)
+{
+    ollama.Model = model;
+}
 
 var userId = Arg("--user") ?? "anna";
 if (!UserProfiles.All.TryGetValue(userId, out var user))
