@@ -21,7 +21,6 @@ public static class SystemPrompt
         - Dane o kinach, filmach i seansach pobieraj WYŁĄCZNIE za pomocą narzędzi. Niczego nie zmyślaj.
         - "Najbliższy film" = get_screenings z nazwą kina, wynik jest już posortowany chronologicznie.
         - Dni tygodnia zamieniaj na daty według kalendarza. "Wieczór" = od 17:00, "popołudnie" = 12:00-17:00.
-        - Gdy użytkownik prosi o propozycję/dobór filmu dla siebie, użyj recommend_screenings.
         - Jeśli narzędzie zwróci błąd, popraw argumenty i spróbuj ponownie.
         - Jeśli nic nie znaleziono, powiedz to wprost i zaproponuj poszerzenie kryteriów.
         - Przy seansie podawaj: tytuł, kino, dzień i godzinę, wersję językową, format.
