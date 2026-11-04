@@ -243,7 +243,7 @@
     },
     {
       "id": "kino-bydgoszcz-focha",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Bydgoszcz",
       "address": {
@@ -255,7 +255,7 @@
     },
     {
       "id": "kino-czechowice-dziedzice",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Czechowice-Dziedzice",
       "address": null,
@@ -263,7 +263,7 @@
     },
     {
       "id": "kino-elblag",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Elbląg",
       "address": null,
@@ -271,7 +271,7 @@
     },
     {
       "id": "kino-gdansk-zwyciestwa",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Gdańsk",
       "address": {
@@ -283,7 +283,7 @@
     },
     {
       "id": "kino-glogow",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Głogów",
       "address": null,
@@ -291,7 +291,7 @@
     },
     {
       "id": "kino-gorzow-wielkopolski",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Gorzów Wielkopolski",
       "address": null,
@@ -299,7 +299,7 @@
     },
     {
       "id": "kino-jaworzno",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Jaworzno",
       "address": null,
@@ -307,7 +307,7 @@
     },
     {
       "id": "kino-kalisz",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Kalisz",
       "address": null,
@@ -315,7 +315,7 @@
     },
     {
       "id": "kino-katowice-galeria",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Katowice",
       "address": null,
@@ -323,7 +323,7 @@
     },
     {
       "id": "kino-kielce",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Kielce",
       "address": null,
@@ -331,7 +331,7 @@
     },
     {
       "id": "kino-klodzko",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Kłodzko",
       "address": null,
@@ -339,7 +339,7 @@
     },
     {
       "id": "kino-koszalin",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Koszalin",
       "address": null,
@@ -347,7 +347,7 @@
     },
     {
       "id": "kino-krakow-dobrego-pasterza",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Kraków",
       "address": {
@@ -359,7 +359,7 @@
     },
     {
       "id": "kino-leszno",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Leszno",
       "address": null,
@@ -367,7 +367,7 @@
     },
     {
       "id": "kino-lublin-olimp",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Lublin",
       "address": {
@@ -379,7 +379,7 @@
     },
     {
       "id": "kino-lodz-pilsudskiego",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Łódź",
       "address": {
@@ -392,7 +392,7 @@
     },
     {
       "id": "kino-mielec",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Mielec",
       "address": null,
@@ -400,7 +400,7 @@
     },
     {
       "id": "kino-olsztyn",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Olsztyn",
       "address": null,
@@ -408,7 +408,7 @@
     },
     {
       "id": "kino-poznan-stary-browar",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Poznań",
       "address": null,
@@ -416,7 +416,7 @@
     },
     {
       "id": "kino-pruszkow",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Pruszków",
       "address": null,
@@ -424,7 +424,7 @@
     },
     {
       "id": "kino-radom",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Radom",
       "address": null,
@@ -432,7 +432,7 @@
     },
     {
       "id": "kino-rumia",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Rumia",
       "address": null,
@@ -440,7 +440,7 @@
     },
     {
       "id": "kino-rybnik-focus",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Rybnik",
       "address": null,
@@ -448,7 +448,7 @@
     },
     {
       "id": "kino-rzeszow",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Rzeszów",
       "address": null,
@@ -456,7 +456,7 @@
     },
     {
       "id": "kino-slupsk",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Słupsk",
       "address": null,
@@ -464,7 +464,7 @@
     },
     {
       "id": "kino-szczecin",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Szczecin",
       "address": null,
@@ -472,7 +472,7 @@
     },
     {
       "id": "kino-swidnica",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Świdnica",
       "address": null,
@@ -480,7 +480,7 @@
     },
     {
       "id": "kino-tarnow",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Tarnów",
       "address": null,
@@ -488,7 +488,7 @@
     },
     {
       "id": "kino-tychy",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Tychy",
       "address": null,
@@ -496,7 +496,7 @@
     },
     {
       "id": "kino-warszawa-atrium-reduta",
-      "network_id": null,
+      "network_id": "multikino",
       "name": "Atrium Reduta",
       "city": "Warszawa",
       "address": null,
@@ -540,7 +540,7 @@
     },
     {
       "id": "kino-wloclawek",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Włocławek",
       "address": {
@@ -552,7 +552,7 @@
     },
     {
       "id": "kino-wroclaw-pasaz-grunwaldzki",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Wrocław",
       "address": null,
@@ -560,7 +560,7 @@
     },
     {
       "id": "kino-zabrze",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Zabrze",
       "address": {
@@ -572,7 +572,7 @@
     },
     {
       "id": "kino-zgorzelec",
-      "network_id": null,
+      "network_id": "multikino",
       "name": null,
       "city": "Zgorzelec",
       "address": null,
