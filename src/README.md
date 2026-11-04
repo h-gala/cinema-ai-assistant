@@ -1,9 +1,6 @@
 # CinemaAgent – agent AI (Tool Calling) do repertuaru kin
 
-Wymagania: .NET SDK 10, Ollama (`ollama pull qwen3:8b`).
-
-Dane: skopiuj pliki testowe do `data/` jako
-`cinemas.json`, `movies.json`, `networks.json`, `catalog*.json` (np. `catalog-2026-W45.json`).
+Wymagania: .NET SDK 9, Ollama (`ollama pull gemma4`).
 
 Uruchomienie:
 
@@ -13,4 +10,4 @@ Uruchomienie:
 
 Użytkownicy: anna, piotr, ola (`Users/UserProfiles.cs`).
 Konfiguracja: `appsettings.json` lub zmienne środowiskowe, np. `Ollama__Model=qwen3:14b`.
-Stałe "teraz" dla powtarzalnego demo: `Agent__Now=2026-11-02T09:00:00+01:00`.
+

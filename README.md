@@ -4,6 +4,7 @@
 ```text
 cinema-ai-assistant/
 ├── README.md
+├── src/
 └── docs/
     └── vision.md
 ```
