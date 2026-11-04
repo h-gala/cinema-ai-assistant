@@ -6,6 +6,13 @@ public class OllamaOptions
     public string Model { get; set; } = "qwen3:8b";
 }
 
+public class OpenAiOptions
+{
+    public string? ApiKey { get; set; }
+    public string? Endpoint { get; set; } // Opcjonalny (dla Groq, GitHub Models, Azure itp.)
+    public string Model { get; set; } = "gpt-4o-mini";
+}
+
 public class AgentOptions
 {
     public int MaxIterations { get; set; } = 6;
