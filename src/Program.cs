@@ -95,7 +95,9 @@ else
 // Ollama nie zgłasza błędu o brakującym modelu aż do pierwszego zapytania.
 // Sprawdź lokalny katalog /api/tags przed uruchomieniem pętli agenta.
 
-var now = agentOpt.Now is not null ? DateTimeOffset.Parse(agentOpt.Now) : DateTimeOffset.Now;
+var now = !string.IsNullOrWhiteSpace(agentOpt.Now) && DateTimeOffset.TryParse(agentOpt.Now, out var parsed)
+    ? parsed
+    : DateTimeOffset.Now;
 var repo = new CinemaRepository(dataDir);
 Console.WriteLine($"Dane: {repo.Cinemas.Count} kin, {repo.Movies.Count} filmów, {repo.Screenings.Count} seansów");
 var tools = new CinemaTools(repo, user, now, agentOpt.EnforceAgeRating).CreateAll();
