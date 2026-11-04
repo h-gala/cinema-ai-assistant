@@ -1,8 +1,8 @@
 namespace CinemaAgent.Models;
 
 // Modele danych testowych (JSON w snake_case)
-public record Address(string Street, string PostalCode, string Country);
-public record Cinema(string Id, string NetworkId, string Name, string City, Address Address);
+public record Address(string? Street, string? PostalCode, string? Country);
+public record Cinema(string Id, string? NetworkId, string Name, string? City, Address? Address);
 public record Movie(string Id, string Title, string? OriginalTitle, int Year, int DurationMinutes,
                     List<string> Genres, string AgeRating, string? Description);
 public record Network(string Id, string Name, string Slug);

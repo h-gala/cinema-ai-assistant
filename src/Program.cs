@@ -49,7 +49,12 @@ async Task Ask(string q)
     catch (Exception ex)
     {
         Console.WriteLine("\nPrzepraszam, coś poszło nie tak. Spróbuj ponownie za chwilę.\n");
-        if (agentOpt.Debug) Console.Error.WriteLine(ex);
+        if (agentOpt.Debug)
+        {
+            var incomplete = repo.Cinemas.Where(c => c.Address is null).Select(c => c.Id).ToList();
+            if (incomplete.Count > 0)
+                Console.WriteLine($"Kina bez adresu ({incomplete.Count}): {string.Join(", ", incomplete)}");
+        }
     }
 }
 

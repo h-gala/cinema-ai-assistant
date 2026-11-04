@@ -27,13 +27,31 @@ public sealed class CinemaTools(CinemaRepository repo, UserProfile user, DateTim
             new AIFunctionFactoryOptions { Name = Regex.Replace(n, "(?<!^)([A-Z])", "_$1").ToLowerInvariant() }))
         .ToList();
 
-    [Description("Find cinemas by free text (name, city or network), e.g. 'Złote Tarasy' or 'Multikino'. Empty query lists all.")]
-    public object FindCinemas([Description("Free text query")] string? query = null) =>
-        repo.FindCinemas(query).Select(c => new
+    [Description("Find cinemas by free text (name, city or network), e.g. 'Złote Tarasy', 'Warszawa' or 'Multikino'. Empty query lists all.")]
+    public object FindCinemas([Description("Free text query")] string? query = null)
+    {
+        var found = repo.FindCinemas(query).ToList();
+        return new
         {
-            c.Id, c.Name, c.City, Network = repo.NetworkName(c.NetworkId),
-            Address = $"{c.Address.Street}, {c.Address.PostalCode}"
-        }).ToList();
+            total = found.Count,
+            cinemas = found.Take(30).Select(c => new
+            {
+                c.Id,
+                c.Name,
+                c.City,
+                Network = repo.NetworkName(c.NetworkId),
+                Address = FormatAddress(c.Address)
+            }).ToList()
+        };
+    }
+
+    static string? FormatAddress(Address? a)
+    {
+        if (a is null) return null;
+        var parts = new[] { a.Street, a.PostalCode }.Where(p => !string.IsNullOrWhiteSpace(p));
+        var text = string.Join(", ", parts);
+        return text.Length == 0 ? null : text;
+    }
 
     [Description("Search movies (title, genre) and return their details: duration, genres, age rating, description.")]
     public object SearchMovies(
