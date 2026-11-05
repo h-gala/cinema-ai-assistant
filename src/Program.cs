@@ -83,7 +83,7 @@ async Task Ask(string q)
     {
         Console.WriteLine("\nOdpowiedź trwa zbyt długo. Spróbuj ponownie.\n");
     }
-    catch (Exception ex)
+    catch (Exception)
     {
         Console.WriteLine("\nPrzepraszam, coś poszło nie tak. Spróbuj ponownie za chwilę.\n");
         if (agentOpt.Debug)

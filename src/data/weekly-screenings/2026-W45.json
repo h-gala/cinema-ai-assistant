@@ -225,6 +225,17 @@
       "version": "napisy",
       "format": "2D",
       "is_premiere": false
+    },
+    {
+      "id": "scr-021",
+      "cinema_id": "multikino-zlote-tarasy",
+      "movie_id": "movie-mlp-eq",
+      "datetime": "2026-11-07T19:30:00+01:00",
+      "auditorium": "Sala 4",
+      "language": "pl",
+      "version": "dubbing",
+      "format": "2D",
+      "is_premiere": false
     }
   ]
 }

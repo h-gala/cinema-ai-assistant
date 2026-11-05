@@ -13,5 +13,11 @@ public static class UserProfiles
             "Najchętniej oglądam horrory i kino akcji."),
         new UserProfile("ola",   "Ola",   10, ["Animacja", "Familijny"],["Horror"],  null,           "afternoon",
             "Kocham My Little Pony, mój ulubiony kucyk to Sunset Shimmer, ona jest super!!!!!!!"),
+        new UserProfile("natalka",   "Natalka",   20, [],[],  null,           "afternoon",
+            "Mam short attention span i oglądam tylko filmy krótsze niż 2 godziny"),
+        new UserProfile("zosia",   "Zosia",   14, [],[],  null,           "evening",
+            "Nowe filmy są beznadziejne, wolę te stare"),
+        new UserProfile("helena",   "Helena",   15, ["Animacja"],["Animacja"],  null,           "evening",
+            "Lubię oglądać filmy w Promenadzie"),
     }.ToDictionary(u => u.Id);
 }

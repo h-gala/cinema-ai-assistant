@@ -6,7 +6,7 @@
       "original_title": "Godzilla Minus Zero",
       "year": 2026,
       "duration_minutes": 135,
-      "genres": ["Sci-Fi", "Akcja", "Dramat"],
+      "genres": [ "Sci-Fi", "Akcja", "Dramat" ],
       "age_rating": "15+",
       "poster_url": null,
       "description": "Kolejna odsłona japońskiej historii o legendarnym potworze."
@@ -17,10 +17,21 @@
       "original_title": "Toy Story 5",
       "year": 2026,
       "duration_minutes": 105,
-      "genres": ["Animacja", "Familijny", "Komedia"],
+      "genres": [ "Animacja", "Familijny", "Komedia" ],
       "age_rating": "BO",
       "poster_url": null,
       "description": "Nowa przygoda znanych zabawek."
+    },
+    {
+      "id": "movie-mlp-eq",
+      "title": "My Little Pony: Equestria Girls",
+      "original_title": "My Little Pony: Equestria Girls",
+      "year": 2013,
+      "duration_minutes": 72,
+      "genres": [ "Animacja", "Familijny", "Fantasy" ],
+      "age_rating": "BO",
+      "poster_url": null,
+      "description": "Twilight Sparkle mierzy się z nowym wrogiem, Sunset Shimmer"
     },
     {
       "id": "movie-project-hail-mary",
@@ -28,7 +39,7 @@
       "original_title": "Project Hail Mary",
       "year": 2026,
       "duration_minutes": 156,
-      "genres": ["Sci-Fi", "Przygodowy", "Dramat"],
+      "genres": [ "Sci-Fi", "Przygodowy", "Dramat" ],
       "age_rating": "12+",
       "poster_url": null,
       "description": "Samotna misja kosmiczna, od której zależą losy ludzkości."
@@ -39,7 +50,7 @@
       "original_title": "Spider-Man: Brand New Day",
       "year": 2026,
       "duration_minutes": 150,
-      "genres": ["Akcja", "Sci-Fi", "Przygodowy"],
+      "genres": [ "Akcja", "Sci-Fi", "Przygodowy" ],
       "age_rating": "12+",
       "poster_url": null,
       "description": "Kolejny rozdział przygód Spider-Mana."
@@ -50,7 +61,7 @@
       "original_title": "The Odyssey",
       "year": 2026,
       "duration_minutes": 172,
-      "genres": ["Przygodowy", "Fantasy", "Dramat"],
+      "genres": [ "Przygodowy", "Fantasy", "Dramat" ],
       "age_rating": "12+",
       "poster_url": null,
       "description": "Filmowa adaptacja klasycznej opowieści o podróży Odyseusza."
@@ -61,7 +72,7 @@
       "original_title": null,
       "year": 2026,
       "duration_minutes": 110,
-      "genres": ["Komedia", "Romans", "Familijny"],
+      "genres": [ "Komedia", "Romans", "Familijny" ],
       "age_rating": "BO",
       "poster_url": null,
       "description": "Świąteczna historia o rodzinie, miłości i wspólnym gotowaniu."
