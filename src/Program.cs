@@ -6,9 +6,23 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using OllamaSharp;
 using System.Text.Json;
+using StackExchange.Redis;
 
 // Użycie: dotnet run -- --user anna [--ask "Znajdź horror na piątek wieczór"]
 string? Arg(string name) { var i = Array.IndexOf(args, name); return i >= 0 && i + 1 < args.Length ? args[i + 1] : null; }
+
+/*
+using ConnectionMultiplexer multiplexer = ConnectionMultiplexer.Connect("localhost");
+IDatabase db = multiplexer.GetDatabase();
+
+db.StringSet("firstkey", "firstvalue");
+
+string? value = db.StringGet("firstkey");
+
+Console.WriteLine(value);
+
+db.StringDelete("firstkey", When.Always);
+*/
 
 var cfg = new ConfigurationBuilder()
     .SetBasePath(AppContext.BaseDirectory)
@@ -60,8 +74,20 @@ using (var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) })
 
 var now = agentOpt.Now is not null ? DateTimeOffset.Parse(agentOpt.Now) : DateTimeOffset.Now;
 var repo = new CinemaRepository(dataDir);
-Console.WriteLine($"Dane: {repo.Cinemas.Count} kin, {repo.Movies.Count} filmów, {repo.Screenings.Count} seansów");
-var tools = new CinemaTools(repo, user, now, agentOpt.EnforceAgeRating).CreateAll();
+//Console.WriteLine($"Dane: {repo.Cinemas.Count} kin, {repo.Movies.Count} filmów, {repo.Screenings.Count} seansów");
+
+var redis = await ConnectionMultiplexer.ConnectAsync("127.0.0.1:6379");
+
+var cinemaTools = new RedisCinemaTools(
+    redis,
+    userAge: user.Age,
+    enforceAgeRating: agentOpt.EnforceAgeRating,
+    userP: user
+    );
+
+var tools = cinemaTools.CreateAll();
+
+//var tools = new CinemaTools(repo, user, now, agentOpt.EnforceAgeRating).CreateAll();
 
 // Zmiana dostawcy modelu = podmiana implementacji IChatClient
 IChatClient chat = new OllamaApiClient(new Uri(ollama.Endpoint), ollama.Model);

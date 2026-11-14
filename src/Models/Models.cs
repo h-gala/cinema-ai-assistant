@@ -26,4 +26,4 @@ public record UserProfile(
     string Id, string Name, int Age,
     string[] FavoriteGenres, string[] DislikedGenres,
     string? PreferredNetworkId, string? PreferredPartOfDay,
-    string Description);
+    string Description, string City);
