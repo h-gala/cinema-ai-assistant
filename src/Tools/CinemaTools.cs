@@ -98,11 +98,12 @@ public sealed class CinemaTools
         });
     }
 
-    [Description("Search movies by title or genre. Returns id, title, year, genres. Use get_movie_details for more. " +
+    [Description("Search movies by title or one or more comma-separated genres, e.g. 'Sci-Fi, Dramat'. " +
+                 "A movie matches if it has any requested genre. Returns id, title, year, genres. Use get_movie_details for more. " +
                  "Genres the user dislikes are hidden unless asked for explicitly.")]
     public async Task<JsonElement> SearchMovies(
         [Description("Part of the title stored in Kinowo")] string? title = null,
-        [Description("Genre, e.g. Horror, Komedia, Sci-Fi, Animacja")] string? genre = null,
+        [Description("One or more comma-separated genres, e.g. 'Sci-Fi, Dramat'. A movie matches any listed genre.")] string? genre = null,
         [Description("Max results (1-30)")] int limit = 15,
         CancellationToken cancellationToken = default)
     {
@@ -138,7 +139,7 @@ public sealed class CinemaTools
     public async Task<JsonElement> GetScreenings(
         [Description("Cinema name fragment, e.g. Cinema City Arkadia")] string? cinema = null,
         [Description("Movie title fragment")] string? title = null,
-        [Description("Genre, e.g. Horror")] string? genre = null,
+        [Description("One or more comma-separated genres, e.g. 'Sci-Fi, Dramat'. A movie matches any listed genre.")] string? genre = null,
         [Description("Date yyyy-MM-dd")] string? dateFrom = null,
         [Description("Date yyyy-MM-dd inclusive; defaults to dateFrom")] string? dateTo = null,
         [Description("Earliest local start HH:mm; evening = 17:00")] string? timeFrom = null,
@@ -524,9 +525,11 @@ public sealed class CinemaTools
         if (!string.IsNullOrWhiteSpace(title) || user.DislikedGenres.Length == 0)
             return [];
 
+        var requestedGenres = ParseGenres(genre);
         return user.DislikedGenres
-            .Where(disliked => string.IsNullOrWhiteSpace(genre) ||
-                !(Matches(disliked, genre) || Matches(genre, disliked)))
+            .Where(disliked => requestedGenres.Length == 0 ||
+                !requestedGenres.Any(requested =>
+                    Matches(disliked, requested) || Matches(requested, disliked)))
             .ToArray();
     }
 
@@ -651,9 +654,23 @@ public sealed class CinemaTools
             .Where(character => CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
             .ToArray());
 
-    private static bool MatchesMovie(MovieDocument movie, string? title, string? genre) =>
-        Matches(movie.Title, title) && (string.IsNullOrWhiteSpace(genre) ||
-            (movie.Genres?.Any(value => Matches(value, genre)) ?? false));
+    private static bool MatchesMovie(MovieDocument movie, string? title, string? genre)
+    {
+        if (!Matches(movie.Title, title))
+            return false;
+
+        var requestedGenres = ParseGenres(genre);
+        return requestedGenres.Length == 0 ||
+            (movie.Genres?.Any(movieGenre =>
+                requestedGenres.Any(requested => Matches(movieGenre, requested))) ?? false);
+    }
+
+    private static string[] ParseGenres(string? genres) =>
+        string.IsNullOrWhiteSpace(genres)
+            ? []
+            : genres.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
 
     private static bool MatchesScreeningFormat(
     string? screeningFormat,

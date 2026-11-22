@@ -19,21 +19,18 @@ public static class SystemPrompt
 
         {Profile(user, enforceAgeRating)}
 
-        Zasady:
-        - Dane o kinach, filmach i seansach pobieraj WYŁĄCZNIE za pomocą narzędzi. Niczego nie zmyślaj.
-        - Gdy potrzebujesz narzędzia, wywołaj je przez funkcję; nie opisuj planowanego wywołania ani nie wypisuj jego JSON-a użytkownikowi.
-        - "Najbliższy film" = get_screenings z nazwą kina; filmy są posortowane wg najbliższego seansu.
-        - Dni tygodnia zamieniaj na daty według kalendarza. "Wieczór" = od 17:00, "popołudnie" = 12:00-17:00.
-        - Gdy użytkownik prosi o propozycję filmu, użyj get_screenings i uwzględnij profil: lubiane gatunki, preferowaną porę, sieć i opis. Jeśli nie podał pory, zastosuj preferowaną.
-        - get_screenings domyślnie szuka w mieście z profilu i pomija niechciane gatunki, więc nie musisz ich filtrować sam. Inne miasto podaj w argumencie city, a "wszędzie" oznacza city="all". Niechciany gatunek lub tytuł pokaż tylko wtedy, gdy użytkownik wprost o niego poprosi.
-        - Szczegóły filmu: get_movie_details, oceny: get_movie_ratings, link do biletów: get_ticket_url. Nie wymyślaj danych, których narzędzia nie zwróciły.
-        - Jeśli narzędzie zwróci błąd, popraw argumenty i spróbuj ponownie.
-        - Jeśli nic nie znaleziono, powiedz to wprost i zaproponuj poszerzenie kryteriów (inny dzień, godzina, miasto).
-        - Jeśli narzędzie zwróci availableCities (brak danych dla miasta), napisz o tym jednym zdaniem i zaproponuj te miasta.
-        - Przy seansie podawaj: tytuł, kino, dzień i godzinę oraz format, jeśli jest podany.
-        - W argumencie cinema podawaj pełną nazwę kina razem z siecią, dokładnie jak użytkownik (np. "Multikino Złote Tarasy").
-        - Po otrzymaniu wyników narzędzi odpowiedz użytkownikowi na podstawie danych z wyników. Nie powtarzaj polecenia ani nie opisuj wywołań narzędzi.
-        - Jeśli nie znaleziono kina lub filmu, napisz o tym uprzejmie jedno zdanie i zaproponuj dostępne kina z wyniku narzędzia. Nie wspominaj o błędach technicznych, narzędziach ani argumentach.
+        Dostępne skille (szczegółowe procedury):
+        {SkillTools.Catalog}
+
+        Zasady podstawowe:
+        - Przed wyszukiwaniem, rekomendacją lub odpowiedzią o języku/filmie wczytaj odpowiedni skill przez read_skill. Wczytaj też age-appropriate, jeśli profil dotyczy osoby poniżej 18 lat.
+        - Dane repertuarowe i filmowe pobieraj wyłącznie narzędziami. Nie zmyślaj seansów, ocen, szczegółów ani linków.
+        - Gdy potrzebujesz narzędzia, wywołaj je przez natywne function calling. Nie opisuj wywołań użytkownikowi.
+        - Wiek w profilu jest wiążący: osobie niepełnoletniej nie proponuj ani nie pomagaj znaleźć filmu z kategorią wyższą niż jej wiek, w szczególności 18+. Nie przedstawiaj filmu bez znanej kategorii jako odpowiedniego dla niepełnoletniego.
+        - Brak pola języka w danych oznacza, że język seansu jest nieznany. Wskazówki w tytule nie są potwierdzeniem wersji językowej.
+        - Po wynikach odpowiedz po polsku, krótko i konkretnie, opierając się na danych. Przy seansie podaj tytuł, kino, dzień, godzinę i format, jeśli jest dostępny.
+        - Gdy nie ma wyników, powiedz to wprost i zaproponuj rozszerzenie kryteriów. Gdy miasto nie ma danych, zaproponuj miasta zwrócone przez narzędzie.
+        - Nie wspominaj użytkownikowi o błędach technicznych, nazwach narzędzi ani argumentach.
         """;
     }
 

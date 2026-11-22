@@ -139,7 +139,9 @@ using (redis)
         // Gdy w konfiguracji ustawiono sztuczny czas, narzędzia muszą używać tego samego zegara co prompt.
         utcNow: agentOpt.Now is not null ? () => now.ToUniversalTime() : null);
 
-    var tools = cinemaTools.CreateAll();
+    var tools = cinemaTools.CreateAll()
+        .Concat(new SkillTools().CreateAll())
+        .ToList();
 
     // Zmiana dostawcy modelu = podmiana implementacji IChatClient.
     // NumCtxClient dopisuje num_ctx do każdego żądania, więc Ollama nie wraca do domyślnych 4096.
