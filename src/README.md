@@ -103,8 +103,10 @@ Program.cs                    wejście: konfiguracja, wybór źródła danych, p
 Agent/
   AgentLoop.cs                pętla tool calling
   SystemPrompt.cs             budowanie promptu (profil, kalendarz, zasady)
+  SkillTools.cs               narzędzie read_skill z białą listą skilli
   HistoryTrimmer.cs           opcjonalne przycinanie historii (można usunąć)
 Tools/CinemaTools.cs          narzędzia dla modelu
+Skills/                       instrukcje ładowane na żądanie przez read_skill
 Storage/
   ICinemaStore.cs             źródło danych
   RedisCinemaStore.cs         Redis JSON
@@ -116,6 +118,12 @@ kinowo_scraper_redis.py             scraper Kinowo
 ```
 
 `HistoryTrimmer` ogranicza rozmiar historii rozmowy (stare tury tracą wyniki narzędzi). Instrukcja usunięcia jest w komentarzu na górze klasy.
+
+### Skille agenta
+
+Krótkie opisy skilli są widoczne w system prompcie. Agent wczytuje pełny plik `Skills/<id>/SKILL.md` narzędziem `read_skill` przed wykonaniem odpowiedniej procedury. Identyfikatory są jawnie dozwolone w `Agent/SkillTools.cs`; dodając skill, zaktualizuj katalog w tej klasie i dodaj plik w `Skills/<id>/SKILL.md`. Pliki są kopiowane do katalogu uruchomieniowego aplikacji.
+
+Obecne skille obejmują wyszukiwanie seansów, rekomendacje, ochronę osób niepełnoletnich, wskazówki dotyczące języka filmu, szczegóły i oceny, lokalizację kina oraz linki do biletów.
 
 ## Kinowo Scraper
 

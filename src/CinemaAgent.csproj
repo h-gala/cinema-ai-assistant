@@ -19,4 +19,7 @@
   <ItemGroup>
     <None Update="data\**\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Skills\**\SKILL.md" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
