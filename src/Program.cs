@@ -11,11 +11,23 @@ using StackExchange.Redis;
 using OllamaChatRequest = OllamaSharp.Models.Chat.ChatRequest;
 using OllamaRequestOptions = OllamaSharp.Models.RequestOptions;
 
-// Użycie: dotnet run -- --user anna [--data data/kinowo] [--ask "Znajdź horror na piątek wieczór"]
-string? Arg(string name)
+// Użycie: dotnet run -- [--model qwen3:8b] [--user anna] [--data data/kinowo] [--ask "Pytanie"]
+var arguments = new Dictionary<string, string>();
+for (var i = 0; i < args.Length; i++)
 {
-    var i = Array.IndexOf(args, name);
-    return i >= 0 && i + 1 < args.Length ? args[i + 1] : null;
+    var option = args[i];
+    if (option is not ("--model" or "--user" or "--data" or "--ask"))
+        continue;
+
+    if (option == "--model" && (i + 1 == args.Length || string.IsNullOrWhiteSpace(args[i + 1])
+                                || args[i + 1].StartsWith("--", StringComparison.Ordinal)))
+    {
+        Console.Error.WriteLine("Podaj nazwę modelu po --model, np. --model qwen3:8b.");
+        return 1;
+    }
+
+    if (i + 1 < args.Length)
+        arguments.TryAdd(option, args[++i]);
 }
 
 // Sztuczny czas z konfiguracji: wartość bez strefy traktujemy jako czas warszawski.
@@ -34,11 +46,14 @@ var cfg = new ConfigurationBuilder()
     .Build();
 
 var ollama = cfg.GetSection("Ollama").Get<OllamaOptions>() ?? new();
+if (arguments.TryGetValue("--model", out var model))
+    ollama.Model = model.Trim();
+
 var agentOpt = cfg.GetSection("Agent").Get<AgentOptions>() ?? new();
 var redisConnection = cfg["Redis:ConnectionString"] ?? "127.0.0.1:6379";
 var numCtx = int.TryParse(cfg["Ollama:NumCtx"], out var configuredCtx) ? configuredCtx : 16384;
 
-var userId = Arg("--user") ?? "anna";
+var userId = arguments.GetValueOrDefault("--user") ?? "anna";
 if (!UserProfiles.All.TryGetValue(userId, out var user))
 {
     Console.Error.WriteLine($"Nieznany użytkownik '{userId}'. Dostępni: {string.Join(", ", UserProfiles.All.Keys)}");
@@ -84,7 +99,7 @@ var now = TimeZoneInfo.ConvertTime(
     agentOpt.Now is { } fixedNow ? ParseNow(fixedNow, warsaw) : DateTimeOffset.UtcNow, warsaw);
 
 // Źródło danych: lokalne pliki JSON ze scrapera (--data <ścieżka> albo Data:LocalPath) lub Redis.
-var localData = Arg("--data") ?? cfg["Data:LocalPath"];
+var localData = arguments.GetValueOrDefault("--data") ?? cfg["Data:LocalPath"];
 ConnectionMultiplexer? redis = null;
 ICinemaStore store;
 if (!string.IsNullOrWhiteSpace(localData))
@@ -164,7 +179,7 @@ using (redis)
         }
     }
 
-    if (Arg("--ask") is { } single)
+    if (arguments.GetValueOrDefault("--ask") is { } single)
     {
         await Ask(single);
         return 0;

@@ -27,15 +27,19 @@ Agent wypisze podsumowanie wczytanych danych (liczba filmów, seansów, miast i 
 
 ```powershell
 dotnet run -- --user anna
+dotnet run -- --model qwen3:8b --user anna --data data/kinowo
 dotnet run -- --user piotr --data data/kinowo --ask "Znajdź film fantasy na czwartek wieczór"
 dotnet run -- --user ola   --ask "Podaj mi najbliższy film w Multikino Złote Tarasy"
 ```
 
 | Argument | Znaczenie |
 |---|---|
+| `--model <nazwa>` | model Ollamy na tę sesję (np. `qwen3:8b`); ma pierwszeństwo przed `Ollama__Model` i `appsettings.json` |
 | `--user <id>` | profil użytkownika: `anna`, `piotr`, `ola` (`Users/UserProfiles.cs`), domyślnie `anna` |
 | `--ask "<pytanie>"` | jedno pytanie i koniec; bez tego tryb interaktywny |
 | `--data <ścieżka>` | dane lokalne zamiast Redisa: katalog z plikami `{slug-miasta}.json` albo pojedynczy plik |
+
+Nazwy zainstalowanych modeli wyświetlisz poleceniem `ollama list`. Wybierz model z obsługą narzędzi (tool calling).
 
 Przed startem aplikacja sprawdza model przez endpoint Ollamy `/api/tags`. Jeśli go brakuje, wypisuje polecenie `ollama pull <model>` i kończy działanie.
 
