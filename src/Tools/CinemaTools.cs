@@ -592,12 +592,13 @@ public sealed class CinemaTools
                 continue;
 
             var parts = key.Split(':');
-            if (parts.Length != 4 || !DateOnly.TryParseExact(parts[3], "yyyy-MM-dd",
+            if (parts.Length != 5 || parts[0] != "repertoire" ||
+                !DateOnly.TryParseExact(parts[4], "yyyy-MM-dd",
                     CultureInfo.InvariantCulture, DateTimeStyles.None, out var day))
                 continue;
 
-            var name = parts[2].Replace("%3A", ":").Replace("%25", "%");
-            var cinema = new CinemaEntry(string.Join(":", parts, 0, 3), name, parts[0], parts[1]);
+            var name = parts[3].Replace("%3A", ":").Replace("%25", "%");
+            var cinema = new CinemaEntry(string.Join(":", parts, 1, 3), name, parts[1], parts[2]);
             schedules.Add(new ScheduleKey(key, cinema, day));
         }
         return schedules;
