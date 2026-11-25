@@ -522,99 +522,15 @@ class RedisMovieStore:
     def minimum_movie_expiry(self):
         return int((datetime.now(self.timezone) + timedelta(days=MOVIE_MIN_DAYS)).timestamp())
 
-    def initialize_legacy_ttls(self, records, today):
-        persistent = {key for key, _, expires in records if expires == -1}
-        if not persistent:
-            return
-        horizons = {key: self.minimum_movie_expiry() for key in persistent}
-        # Stare dokumenty nie zawierają seansów. Ich ostatni dzień odczytujemy
-        # ze wszystkich istniejących repertuarów, także z innych miast.
-        for key, rows, _ in read_json_keys(self.client, SCHEDULE_PATTERN):
-            day = schedule_day(key)
-            if day is None or not isinstance(rows, list):
-                continue
-            expires = self.midnight(day + timedelta(days=1 + MOVIE_GRACE_DAYS))
-            for row in rows:
-                movie_key = "movie:" + row.get("movie_id", "")
-                if movie_key in horizons:
-                    horizons[movie_key] = max(horizons[movie_key], expires)
-        with self.client.pipeline(transaction=True) as pipeline:
-            for key, expires in horizons.items():
-                extend_expiry(pipeline, key, expires)
-            pipeline.execute()
-
     def write(self, city, movies):
         # Blokada obejmuje tylko lokalny zapis. Pobieranie HTTP odbywa się wcześniej.
         # Chroni rozpoznawanie nowego filmu przed równoległym importem innego miasta.
         with self.client.lock("kinowo:dedup-import-lock", timeout=300, blocking_timeout=30) as lock:
             return self.write_locked(city, movies, lock)
 
-    def migrate_existing(self):
-        """Połącz stare wpisy i przepnij odwołania we wszystkich repertuarach."""
-        with self.client.lock("kinowo:dedup-import-lock", timeout=300, blocking_timeout=30) as lock:
-            today = datetime.now(self.timezone).date()
-            records = list(read_json_keys(self.client, "movie:*"))
-            catalog = MovieCatalog({})
-            mapping = {}
-            horizons = {}
-            minimum = self.minimum_movie_expiry()
-            original_titles = {key[len("movie:"):]: document.get("title") for key, document, _ in records}
-            records.sort(key=lambda record: (
-                record[1].get("title") != base_title(record[1].get("title")), record[0]
-            ))
-            for key, document, expires in records:
-                source = key[len("movie:"):]
-                incoming = dict(document, slug=source)
-                canonical = catalog.resolve(incoming)
-                mapping[source] = canonical
-                if canonical not in catalog.documents:
-                    catalog.add(canonical, movie_document(incoming, canonical))
-                horizons[canonical] = max(horizons.get(canonical, minimum), minimum, expires)
-
-            schedules = []
-            for key, rows, expires in read_json_keys(self.client, SCHEDULE_PATTERN):
-                day = schedule_day(key)
-                if day is None or not isinstance(rows, list):
-                    continue
-                changed = False
-                if changed:
-                    schedules.append((key, rows, expires))
-
-            # Przepnij także istniejące aliasy prowadzące do starych dokumentów.
-            aliases = dict(mapping)
-            for key in self.client.scan_iter(match="movie_alias:*", count=500):
-                value = self.client.get(key)
-                target = value.decode() if isinstance(value, bytes) else value
-                if target in mapping:
-                    name = key.decode() if isinstance(key, bytes) else key
-                    aliases[name[len("movie_alias:"):]] = mapping[target]
-
-            lock.reacquire()
-            with self.client.pipeline(transaction=True) as pipeline:
-                for canonical, document in catalog.documents.items():
-                    key = "movie:" + canonical
-                    pipeline.execute_command("JSON.SET", key, "$", json.dumps(document, ensure_ascii=False))
-                    extend_expiry(pipeline, key, horizons[canonical])
-                for source, canonical in aliases.items():
-                    key = "movie_alias:" + source
-                    pipeline.set(key, canonical, keepttl=True)
-                    extend_expiry(pipeline, key, horizons[canonical])
-                for key, rows, expires in schedules:
-                    pipeline.execute_command("JSON.SET", key, "$", json.dumps(rows, ensure_ascii=False))
-                    if expires > 0:
-                        pipeline.expireat(key, expires)
-                for source, canonical in mapping.items():
-                    if source != canonical:
-                        pipeline.delete("movie:" + source)
-                pipeline.execute()
-            return f"Migracja: {len(records)} wpisów → {len(catalog.documents)} filmów; " + (
-                f"przepisano {len(schedules)} repertuarów."
-            )
-
     def write_locked(self, city, movies, lock):
         today = datetime.now(self.timezone).date()
         records = list(read_json_keys(self.client, "movie:*"))
-        self.initialize_legacy_ttls(records, today)
         catalog = MovieCatalog({key[len("movie:"):]: document for key, document, _ in records})
         resolved = []
         aliases = {}
@@ -700,48 +616,31 @@ def export_cities(cities, save_city):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--html", type=Path, help="Wczytaj zapisany HTML lub fragment z pliku UTF-8.")
     parser.add_argument("--city", metavar="SLUG", help="Pobierz jedno miasto, np. krakow lub trojmiasto.")
-    parser.add_argument("--migrate-existing", action="store_true",
-                        help="Połącz istniejące filmy i przepnij wszystkie repertuary; zakończ bez pobierania stron.")
     output = parser.add_mutually_exclusive_group()
-    output.add_argument("--redis", action="store_true", help="Zapisz do Redis JSON (tryb domyślny online).")
+    output.add_argument("--redis", action="store_true", help="Zapisz do Redis JSON (tryb domyślny).")
     output.add_argument("--output-dir", type=Path, help="Zamiast Redisa zapisz osobne pliki JSON w tym folderze.")
     output.add_argument("-o", "--output", type=Path, help="Zapisz pojedynczy JSON (domyślnie dla Warszawy).")
     args = parser.parse_args()
 
-    if args.migrate_existing and (args.html or args.city or args.output or args.output_dir):
-        parser.error("--migrate-existing uruchom osobno, bez opcji pobierania lub zapisu plików.")
     if args.city and not CITY_SLUG.fullmatch(args.city):
         parser.error("--city wymaga identyfikatora z adresu Kinowo, np. poznan.")
     slug = args.city or "warszawa"
     city_url = urljoin(KINOWO_URL, slug + "/")
 
     try:
-        save_city = None
-        if args.redis or args.migrate_existing or not (args.html or args.output or args.output_dir):
+        if args.output:
+            write_json(fetch_repertoire(city_url), args.output)
+            return 0
+        if args.output_dir:
+            args.output_dir.mkdir(parents=True, exist_ok=True)
+            save_city = partial(write_city_file, args.output_dir)
+        else:
             try:
                 timezone = ZoneInfo("Europe/Warsaw")
             except ZoneInfoNotFoundError as exc:
                 raise ValueError("Brak danych stref czasowych. Zainstaluj pakiet tzdata.") from exc
-            store = RedisMovieStore(connect_redis(), timezone)
-            if args.migrate_existing:
-                print(store.migrate_existing())
-                return 0
-            save_city = store.write
-        elif args.output_dir:
-            args.output_dir.mkdir(parents=True, exist_ok=True)
-            save_city = partial(write_city_file, args.output_dir)
-        if args.html:
-            movies = parse_repertoire(args.html.read_text(encoding="utf-8-sig"), city_url)
-            if save_city is None:
-                write_json(movies, args.output)
-            else:
-                print(f"{slug}: {save_city(slug, movies)}", file=sys.stderr)
-            return 0
-        if args.output:
-            write_json(fetch_repertoire(city_url), args.output)
-            return 0
+            save_city = RedisMovieStore(connect_redis(), timezone).write
         if args.city:
             cities = {slug: city_url}
         else:
