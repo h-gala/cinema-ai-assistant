@@ -22,4 +22,7 @@
   <ItemGroup>
     <None Update="Skills\**\SKILL.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CinemaAgent.Core\CinemaAgent.Core.csproj" />
+  </ItemGroup>
 </Project>

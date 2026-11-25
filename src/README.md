@@ -26,10 +26,10 @@ Agent wypisze podsumowanie wczytanych danych (liczba filmów, seansów, miast i 
 ## Uruchomienie agenta
 
 ```powershell
-dotnet run -- --user anna
-dotnet run -- --model qwen3:8b --user anna --data data/kinowo
-dotnet run -- --user piotr --data data/kinowo --ask "Znajdź film fantasy na czwartek wieczór"
-dotnet run -- --user ola   --ask "Podaj mi najbliższy film w Multikino Złote Tarasy"
+dotnet run --project ./CinemaAgent/CinemaAgent.csproj -- --user anna
+dotnet run --project ./CinemaAgent/CinemaAgent.csproj -- --model qwen3:8b --user anna --data data/kinowo
+dotnet run --project ./CinemaAgent/CinemaAgent.csproj -- --user piotr --data data/kinowo --ask "Znajdź film fantasy na czwartek wieczór"
+dotnet run --project ./CinemaAgent/CinemaAgent.csproj -- --user ola   --ask "Podaj mi najbliższy film w Multikino Złote Tarasy"
 ```
 
 | Argument | Znaczenie |
@@ -58,7 +58,7 @@ Narzędzia pomijają seanse z przeszłości. Jeśli pliki są starsze niż dziś
 
 ```powershell
 $env:Agent__Now = "2026-11-16T18:00"
-dotnet run -- --user anna --data data/kinowo
+dotnet run --project ./CinemaAgent/CinemaAgent.csproj -- --user anna --data data/kinowo
 ```
 
 Wartość bez strefy jest traktowana jako czas warszawski.
@@ -99,27 +99,6 @@ Profil wpływa też na narzędzia:
 - **Niechciane gatunki** są domyślnie ukrywane w `get_screenings` i `search_movies`. Pojawiają się dopiero, gdy użytkownik poda tytuł albo wprost poprosi o ten gatunek.
 - **Ograniczenie wieku:** gdy `Agent:EnforceAgeRating` jest włączone, wyniki nie zawierają filmów z kategorią wyższą niż wiek użytkownika. Nieznane formaty kategorii są odrzucane.
 - Jeśli dla miasta nie ma danych (np. Biłgoraj), agent informuje o tym i proponuje miasta, które dane mają.
-
-## Struktura projektu
-
-```text
-Program.cs                    wejście: konfiguracja, wybór źródła danych, pętla pytań
-Agent/
-  AgentLoop.cs                pętla tool calling
-  SystemPrompt.cs             budowanie promptu (profil, kalendarz, zasady)
-  SkillTools.cs               narzędzie read_skill z białą listą skilli
-  HistoryTrimmer.cs           opcjonalne przycinanie historii (można usunąć)
-Tools/CinemaTools.cs          narzędzia dla modelu
-Skills/                       instrukcje ładowane na żądanie przez read_skill
-Storage/
-  ICinemaStore.cs             źródło danych
-  RedisCinemaStore.cs         Redis JSON
-  LocalCinemaStore.cs         lokalne pliki JSON ze scrapera
-Models/UserProfile.cs         profil użytkownika
-Users/UserProfiles.cs         zdefiniowani użytkownicy
-Services/TextUtil.cs          nazwy dni tygodnia
-kinowo_scraper_redis.py             scraper Kinowo
-```
 
 `HistoryTrimmer` ogranicza rozmiar historii rozmowy (stare tury tracą wyniki narzędzi). Instrukcja usunięcia jest w komentarzu na górze klasy.
 
