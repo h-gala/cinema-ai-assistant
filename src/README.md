@@ -15,7 +15,7 @@ Asystent odpowiadający po polsku na pytania o repertuar kin. Model (Ollama) pro
 
 ```powershell
 # 1. Pobierz repertuar jednego miasta do plików JSON
-python kinowo_scraper_redis.py --city warszawa --output-dir data/kinowo
+python run.py --fetch --city warszawa --output-dir data/kinowo
 
 # 2. Uruchom agenta na lokalnych danych
 dotnet run -- --user anna --data data/kinowo
@@ -133,44 +133,23 @@ Obecne skille obejmują wyszukiwanie seansów, rekomendacje, ochronę osób niep
 
 Scraper pobiera repertuar ze strony Kinowo i zapisuje go do Redis JSON albo do plików JSON. Korzysta tylko z biblioteki standardowej Pythona. Pakiety `redis` i `tzdata` są potrzebne wyłącznie do zapisu w Redisie.
 
-### Instalacja (Windows, PowerShell)
-
-Polecenia wykonuj w katalogu projektu.
-
-```powershell
-py -3.12 -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-Przy kolejnych uruchomieniach wystarczy aktywować środowisko (`.venv\Scripts\Activate.ps1`). Wyjście: `deactivate`.
-
 ### Tryby pracy
 
 ```powershell
 # Pliki JSON, jedno miasto (zalecane dla kontrybutorów bez Redisa)
-python kinowo_scraper_redis.py --city warszawa --output-dir data/kinowo
+python run.py --fetch --city warszawa --output-dir data/kinowo
 
 # Pliki JSON, wszystkie miasta z mapy strony (2 s przerwy między żądaniami)
-python kinowo_scraper_redis.py --output-dir data/kinowo
+python run.py --fetch --output-dir data/kinowo
 
 # Pojedynczy plik; nazwa musi być slugiem miasta, jeśli ma trafić do --data
-python kinowo_scraper_redis.py --city warszawa -o data/kinowo/warszawa.json
+python run.py --fetch --city warszawa -o data/kinowo/warszawa.json
 
 # Zapis do Redisa (Redis 8 lub Redis Stack); adres w zmiennej REDIS_URL
-python kinowo_scraper_redis.py --redis --city warszawa
+python fetch.py --fetch --redis --city warszawa
 ```
 
 Bez żadnej z opcji zapisu (`--redis`, `--output-dir`, `-o`, `--html`) scraper zapisuje do Redisa. Opcja `--html <plik>` wczytuje zapisaną stronę zamiast pobierać ją z sieci.
 
 W Redisie klucze repertuaru wygasają o północy w dniu seansu, a dane filmów są zapisywane tylko raz (`NX`). Przy zapisie do plików nic nie wygasa.
 
-### .gitignore
-
-```gitignore
-.venv/
-__pycache__/
-*.py[cod]
-data/kinowo/
-```
