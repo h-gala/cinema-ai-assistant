@@ -1,21 +1,45 @@
 #!/usr/bin/env python3
-"""Eksport warszawskiego repertuaru Kinowo do JSON.
+"""Eksport repertuarów Kinowo do Redis JSON lub do plików.
 
-Instalacja: python -m pip install lxml
-Uruchomienie: python kinowo_scraper.py -o repertuar.json
+Wymagania: Python 3.9 lub nowszy.
+Instalacja klienta Redis: python -m pip install redis tzdata
+Uruchomienie: python kinowo_scraper_dedup.py --redis
 """
 
 import argparse
+import hashlib
 import json
+import os
 import re
 import sys
+import unicodedata
+from collections import defaultdict
+from datetime import date, datetime, time, timedelta
+from functools import partial
+from html.parser import HTMLParser
+from http.client import HTTPException
 from pathlib import Path
+from tempfile import NamedTemporaryFile
+from time import sleep
+from urllib.error import HTTPError
 from urllib.parse import urljoin, urlsplit
 from urllib.request import Request, urlopen
+from xml.etree import ElementTree
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from lxml import etree, html
+try:
+    import redis
+except ImportError:
+    redis = None
 
-REPERTORY_URL = "https://kinowo.net/warszawa/"
+KINOWO_URL = "https://kinowo.net/"
+SITEMAP_URL = urljoin(KINOWO_URL, "sitemap.xml")
+REPERTORY_URL = urljoin(KINOWO_URL, "warszawa/")
+CITY_SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
+REQUEST_PAUSE_SECONDS = 2
+DEFAULT_REDIS_URL = "redis://127.0.0.1:6379/0"
+KNOWN_CHAINS = ("Multikino", "Cinema City", "Helios")
+REDIS_ERRORS = (redis.RedisError,) if redis is not None else ()
 RATING_SOURCES = {
     "imdb": ("rating-imdb", "rating-imdb-value", 10),
     "metacritic": ("rating-meta", None, 100),
@@ -23,16 +47,79 @@ RATING_SOURCES = {
     "filmweb": ("rating-fw", "rating-fw-value", 10),
 }
 SHOWTIME_PATTERN = re.compile(r"(?:[01]?\d|2[0-3]):[0-5]\d")
+SCHEDULE_PREFIX = "repertoire"
+SCHEDULE_PATTERN = f"{SCHEDULE_PREFIX}:*:*:*:????-??-??"
 
 
-def css_class(name):
-    """Zwraca warunek XPath dopasowujący całe słowo w atrybucie class."""
-    return f'contains(concat(" ", normalize-space(@class), " "), " {name} ")'
+def schedule_day(key):
+    """Zwraca dzień z klucza repertuaru albo None, jeśli to inny klucz."""
+    parts = key.split(":")
+    if len(parts) != 5 or parts[0] != SCHEDULE_PREFIX:
+        return None
+    try:
+        return date.fromisoformat(parts[-1])
+    except ValueError:
+        return None
+
+VOID_ELEMENTS = {
+    "area", "base", "br", "col", "embed", "hr", "img", "input",
+    "link", "meta", "param", "source", "track", "wbr",
+}
 
 
-def first(node, xpath):
-    matches = node.xpath(xpath)
-    return matches[0] if matches else None
+class Element:
+    def __init__(self, tag, attributes=()):
+        self.tag = tag
+        self.attributes = {key: value or "" for key, value in attributes}
+        self.classes = self.get("class", "").split()
+        self.content = []
+
+    def get(self, key, default=None):
+        return self.attributes.get(key, default)
+
+    def children(self):
+        return (item for item in self.content if isinstance(item, Element))
+
+    def descendants(self):
+        stack = list(reversed(list(self.children())))
+        while stack:
+            node = stack.pop()
+            yield node
+            stack.extend(reversed(list(node.children())))
+
+    def with_class(self, name):
+        return (node for node in self.descendants() if name in node.classes)
+
+    def text_content(self):
+        return "".join(
+            item.text_content() if isinstance(item, Element) else item
+            for item in self.content
+        )
+
+
+class RepertoireHTMLParser(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.root = Element("document")
+        self.stack = [self.root]
+
+    def handle_starttag(self, tag, attrs):
+        node = Element(tag, attrs)
+        self.stack[-1].content.append(node)
+        if tag not in VOID_ELEMENTS:
+            self.stack.append(node)
+
+    def handle_startendtag(self, tag, attrs):
+        self.stack[-1].content.append(Element(tag, attrs))
+
+    def handle_endtag(self, tag):
+        for index in range(len(self.stack) - 1, 0, -1):
+            if self.stack[index].tag == tag:
+                del self.stack[index:]
+                break
+
+    def handle_data(self, data):
+        self.stack[-1].content.append(data)
 
 
 def clean(value):
@@ -60,16 +147,16 @@ def list_attribute(node, attribute):
 
 def parse_ratings(card, base_url):
     ratings = {}
-    container = first(card, f'.//*[{css_class("ratings")}]')
+    container = next(card.with_class("ratings"), None)
     if container is None:
         return ratings
 
     for source, (link_class, value_class, scale) in RATING_SOURCES.items():
-        link = first(container, f'.//a[{css_class(link_class)}]')
+        link = next((node for node in container.with_class(link_class) if node.tag == "a"), None)
         if link is None:
             continue
         value_node = (
-            first(link, f'.//*[{css_class(value_class)}]') if value_class else link
+            next(link.with_class(value_class), None) if value_class else link
         )
         value = (element_text(value_node) or "").rstrip("%").replace(",", ".")
         ratings[source] = {
@@ -83,14 +170,18 @@ def parse_ratings(card, base_url):
 
 def parse_showtimes(card, base_url):
     showtimes = []
-    for day in card.xpath(f'.//*[{css_class("date-group")} and @data-date]'):
-        for cinema in day.xpath(f'.//*[{css_class("cinema-group")}]'):
-            label = first(cinema, f'./*[{css_class("cinema-label")}]')
+    for day in card.with_class("date-group"):
+        if not day.get("data-date"):
+            continue
+        for cinema in day.with_class("cinema-group"):
+            label = next((node for node in cinema.children() if "cinema-label" in node.classes), None)
             cinema_name = (element_text(label) or "").removesuffix("↗").strip()
             prefix = cinema.get("data-u")
-            for entry in cinema.xpath(f'.//*[@data-s or {css_class("badge-time")}]'):
+            for entry in cinema.descendants():
+                if entry.get("data-s") is None and "badge-time" not in entry.classes:
+                    continue
                 # Odczytaj tekst godziny bez zagnieżdżonej plakietki z formatem.
-                time = clean(" ".join(entry.xpath("./text()")))
+                time = clean(" ".join((part for part in entry.content if isinstance(part, str))))
                 if not time or not SHOWTIME_PATTERN.fullmatch(time):
                     continue
                 href = entry.get("href")
@@ -98,7 +189,7 @@ def parse_showtimes(card, base_url):
                 if not href and prefix is not None and suffix:
                     # Kinowo łączy te fragmenty bez dodatkowego separatora.
                     href = prefix + suffix
-                format_badge = first(entry, f'.//*[{css_class("badge-fmt")}]')
+                format_badge = next(entry.with_class("badge-fmt"), None)
                 showtimes.append({
                     "date": day.get("data-date"),
                     "time": time.zfill(5),
@@ -111,25 +202,44 @@ def parse_showtimes(card, base_url):
 
 
 def parse_repertoire(page, base_url=REPERTORY_URL):
-    root = html.fromstring(page)
-    cards = root.xpath(f'//div[{css_class("col")} and @data-title and @data-slug]')
+    parser = RepertoireHTMLParser()
+    parser.feed(page)
+    parser.close()
+    root = parser.root
+    cards = [
+        node for node in root.with_class("col")
+        if node.tag == "div" and node.get("data-title") and node.get("data-slug")
+    ]
     if not cards:
-        empty = first(root, '//*[@id="no-films"]')
-        if empty is not None and "display:none" not in empty.get("style", "").replace(" ", ""):
+        page_elements = {
+            node.get("id"): node for node in root.descendants()
+            if node.get("id") in {"view-root", "film-grid", "no-films"}
+        }
+        view = page_elements.get("view-root")
+        grid = page_elements.get("film-grid")
+        if (view is not None and view.get("data-view") == "films"
+                and "no-films" in page_elements and grid is not None
+                and not any(grid.children())):
             return []
         raise ValueError("W HTML-u nie znaleziono kart filmów Kinowo.")
 
     movies = []
     for card in cards:
-        title_box = first(card, f'.//*[{css_class("card-title")}]')
-        movie_link = first(title_box, "./a[@href]/@href") if title_box is not None else None
-        year_text = element_text(first(card, f'.//*[{css_class("year")}]'))
+        title_box = next(card.with_class("card-title"), None)
+        movie_link = None
+        if title_box is not None:
+            movie_link = next(
+                (node.get("href") for node in title_box.children()
+                 if node.tag == "a" and node.get("href")),
+                None,
+            )
+        year_text = element_text(next(card.with_class("year"), None))
         movies.append({
             "title": clean(card.get("data-title")),
             "slug": card.get("data-slug"),
             "url": absolute_url(base_url, movie_link),
             "year": int(year_text) if year_text and year_text.isdecimal() else None,
-            "duration": element_text(first(card, f'.//*[{css_class("runtime")}]')),
+            "duration": element_text(next(card.with_class("runtime"), None)),
             "age_rating": clean(card.get("data-age-rating")),
             "genres": list_attribute(card, "data-genres"),
             "countries": list_attribute(card, "data-countries"),
@@ -143,36 +253,405 @@ def parse_repertoire(page, base_url=REPERTORY_URL):
     return movies
 
 
-def fetch_repertoire():
+def fetch(url, accept):
     request = Request(
-        REPERTORY_URL,
-        headers={"User-Agent": "KinowoRepertoryScraper/1.0", "Accept": "text/html"},
+        url,
+        headers={"User-Agent": "KinowoRepertoryScraper/1.0", "Accept": accept},
     )
     with urlopen(request, timeout=30) as response:
         encoding = response.headers.get_content_charset() or "utf-8"
         return response.read().decode(encoding), response.geturl()
 
 
+def parse_city_urls(sitemap):
+    root = ElementTree.fromstring(sitemap)
+    if root.tag.rsplit("}", 1)[-1] != "urlset":
+        raise ValueError("Mapa Kinowo nie zawiera listy adresów URL.")
+
+    cities = {}
+    for location in root.findall("./{*}url/{*}loc"):
+        url = urlsplit((location.text or "").strip())
+        slug = url.path.removeprefix("/").removesuffix("/")
+        if (url.scheme == "https" and url.netloc == "kinowo.net"
+                and not url.query and not url.fragment and CITY_SLUG.fullmatch(slug)):
+            cities[slug] = urljoin(KINOWO_URL, slug + "/")
+    if not cities:
+        raise ValueError("W mapie Kinowo nie znaleziono stron miast.")
+    return dict(sorted(cities.items()))
+
+
+def fetch_repertoire(url=REPERTORY_URL):
+    page, final_url = fetch(url, "text/html")
+    requested = urlsplit(url)
+    final = urlsplit(final_url)
+    if (final.netloc, final.path.rstrip("/")) != (requested.netloc, requested.path.rstrip("/")):
+        raise ValueError(f"Kinowo przekierowało do innej strony ({final_url}).")
+    return parse_repertoire(page, final_url)
+
+
+def write_json(movies, path=None):
+    result = json.dumps(movies, ensure_ascii=False, indent=2) + "\n"
+    if path is None:
+        sys.stdout.write(result)
+        return
+
+    # Zastąp istniejący plik dopiero po zapisaniu całego nowego repertuaru.
+    temporary = NamedTemporaryFile(
+        mode="w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False
+    )
+    temporary_path = Path(temporary.name)
+    try:
+        with temporary:
+            temporary.write(result)
+        temporary_path.replace(path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+def connect_redis():
+    if redis is None:
+        raise ValueError("Zainstaluj klienta Redis poleceniem: python -m pip install redis tzdata")
+    client = redis.Redis.from_url(
+        os.environ.get("REDIS_URL", DEFAULT_REDIS_URL),
+        socket_connect_timeout=5,
+        socket_timeout=15,
+    )
+    try:
+        # Odczyt sprawdza połączenie i obsługę Redis JSON przed pobieraniem stron.
+        client.execute_command("JSON.GET", "movie:__kinowo_probe__")
+    except redis.ResponseError as exc:
+        if "unknown command" in str(exc).lower():
+            raise ValueError("Serwer nie obsługuje JSON.GET. Użyj Redis 8 lub Redis Stack.") from exc
+        raise
+    return client
+
+
+def cinema_chain(cinema):
+    name = cinema.casefold()
+    for chain in KNOWN_CHAINS:
+        prefix = chain.casefold()
+        if name == prefix or name.startswith(prefix + " "):
+            return chain
+    return "inne"
+
+
+def build_redis_documents(city, movies, timezone, today):
+    movie_documents = {}
+    schedules = defaultdict(list)
+    for movie in movies:
+        slug = movie["slug"]
+        movie_documents.setdefault(f"movie:{slug}", {
+            key: value for key, value in movie.items() if key not in {"url", "showtimes"}
+        })
+        for showtime in movie["showtimes"]:
+            day = date.fromisoformat(showtime["date"])
+            if day < today:
+                continue
+            cinema = showtime["cinema"]
+            if not cinema:
+                raise ValueError(f"Brak nazwy kina dla seansu filmu {slug} ({day}).")
+            # Zachowaj nazwę kina, kodując tylko separator klucza i znak ucieczki.
+            cinema_key = cinema.replace("%", "%25").replace(":", "%3A")
+            key = f"{SCHEDULE_PREFIX}:{city}:{cinema_chain(cinema)}:{cinema_key}:{day.isoformat()}"
+            expires = int(datetime.combine(day + timedelta(days=1), time.min, timezone).timestamp())
+            schedules[key, expires].append({
+                "movie_id": slug,
+                "source_slug": movie.get("source_slug", slug),
+                "source_title": movie.get("source_title", movie.get("title")),
+                "time": showtime["time"],
+                "room": showtime["room"],
+                "format": showtime["format"],
+                "ticket_url": showtime["ticket_url"],
+            })
+    for showtimes in schedules.values():
+        showtimes.sort(key=lambda row: (row["time"], row["movie_id"]))
+    return movie_documents, schedules
+
+
+
+# Reguły obejmują wyłącznie rozpoznane nazwy wydarzeń.
+EVENT_PREFIXES = (
+    "janosik dzieciom", "kino przyjazne sensorycznie", "kmw",
+    "kino konesera", "kino kobiet", "kultura dostepna",
+)
+MOVIE_MIN_DAYS = 7
+MOVIE_GRACE_DAYS = 2
+
+
+def normalized_text(value):
+    value = (value or "").casefold().replace("ł", "l")
+    value = unicodedata.normalize("NFKD", value)
+    value = "".join(char for char in value if not unicodedata.combining(char))
+    return " ".join(re.findall(r"[a-z0-9]+", value))
+
+
+def base_title(title):
+    title = clean(title) or ""
+    while ":" in title:
+        prefix, rest = title.split(":", 1)
+        if normalized_text(prefix) not in EVENT_PREFIXES or not rest.strip():
+            break
+        title = rest.strip()
+    return title
+
+
+def external_ids(movie):
+    ids = dict(movie.get("external_ids") or {})
+    for source, rating in (movie.get("ratings") or {}).items():
+        url = urlsplit(rating.get("url") or "")
+        host = (url.hostname or "").lower().removeprefix("www.")
+        if source == "imdb" and host == "imdb.com":
+            match = re.search(r"/title/(tt[0-9]+)(?:/|$)", url.path)
+        elif source == "filmweb" and host == "filmweb.pl":
+            match = re.search(r"/film/[^/]*-([0-9]+)/?$", url.path)
+        else:
+            continue
+        if match:
+            ids[source] = match.group(1)
+    return ids
+
+
+def duration_minutes(value):
+    match = re.fullmatch(r"\s*(?:(\d+)h\s*)?(?:(\d+)min)?\s*", value or "")
+    if not match or not any(match.groups()):
+        return None
+    return 60 * int(match.group(1) or 0) + int(match.group(2) or 0)
+
+
+def same_film(first, second):
+    left, right = external_ids(first), external_ids(second)
+    # Sprzeczne identyfikatory lub lata oznaczają osobne wpisy.
+    if any(left[source] != right[source] for source in left.keys() & right.keys()):
+        return False
+    if first.get("year") and second.get("year") and first["year"] != second["year"]:
+        return False
+    if any(left[source] == right[source] for source in left.keys() & right.keys()):
+        return True
+    if normalized_text(base_title(first.get("title"))) != normalized_text(base_title(second.get("title"))):
+        return False
+    directors = [normalized_text(movie.get("director")) for movie in (first, second)]
+    runtimes = [duration_minutes(movie.get("duration")) for movie in (first, second)]
+    return bool(
+        first.get("year") and first.get("year") == second.get("year")
+        and all(directors) and directors[0] == directors[1]
+        and all(value is not None for value in runtimes)
+        and abs(runtimes[0] - runtimes[1]) <= 2
+    )
+
+
+class MovieCatalog:
+    def __init__(self, documents):
+        self.documents = {}
+        self.by_external_id = defaultdict(set)
+        self.by_title = defaultdict(set)
+        for slug, document in sorted(documents.items()):
+            self.add(slug, document)
+
+    def add(self, slug, movie):
+        self.documents[slug] = movie
+        for source, identifier in external_ids(movie).items():
+            self.by_external_id[source, identifier].add(slug)
+        self.by_title[normalized_text(base_title(movie.get("title")))].add(slug)
+
+    def resolve(self, movie, alias=None):
+        slug = movie["slug"]
+        if slug in self.documents:
+            return slug
+        if alias in self.documents and same_film(self.documents[alias], movie):
+            return alias
+        candidates = set()
+        for source, identifier in external_ids(movie).items():
+            candidates.update(self.by_external_id[source, identifier])
+        candidates.update(self.by_title[normalized_text(base_title(movie.get("title")))])
+        matching = sorted(candidate for candidate in candidates
+                          if same_film(self.documents[candidate], movie))
+        # Nie wybieraj arbitralnie spośród sprzecznych rekordów.
+        for first in matching:
+            for second in matching:
+                if not same_film(self.documents[first], self.documents[second]):
+                    return slug
+        if matching:
+            # W istniejącej bazie preferuj już występujący tytuł bez prefiksu.
+            matching.sort(key=lambda candidate: (
+                self.documents[candidate].get("title") != base_title(self.documents[candidate].get("title")),
+                candidate,
+            ))
+            return matching[0]
+        # Usuwanie prefiksu bez potwierdzonych metadanych byłoby zbyt ryzykowne.
+        # Pierwszy wariant zachowuje więc swój źródłowy slug.
+        return slug
+
+
+def movie_document(movie, canonical_slug):
+    document = {key: value for key, value in movie.items() if key not in {"url", "showtimes"}}
+    document["slug"] = canonical_slug
+    document["title"] = base_title(movie.get("title"))
+    document["external_ids"] = external_ids(movie)
+    return document
+
+
+def read_json_keys(client, pattern):
+    keys = list(set(client.scan_iter(match=pattern, count=500)))
+    for offset in range(0, len(keys), 200):
+        batch = keys[offset:offset + 200]
+        with client.pipeline(transaction=False) as pipeline:
+            for key in batch:
+                pipeline.execute_command("JSON.GET", key)
+                pipeline.execute_command("EXPIRETIME", key)
+            replies = pipeline.execute()
+        for index, key in enumerate(batch):
+            raw, expires = replies[2 * index:2 * index + 2]
+            if raw is not None:
+                yield key.decode() if isinstance(key, bytes) else key, json.loads(raw), expires
+
+
+def extend_expiry(pipeline, key, expires):
+    # GT traktuje klucz bez TTL jako nieskończony. Najpierw obsłuż ten przypadek.
+    pipeline.execute_command("EXPIREAT", key, expires, "NX")
+    pipeline.execute_command("EXPIREAT", key, expires, "GT")
+
+
+class RedisMovieStore:
+    def __init__(self, client, timezone):
+        self.client = client
+        self.timezone = timezone
+
+    def midnight(self, day):
+        return int(datetime.combine(day, time.min, self.timezone).timestamp())
+
+    def minimum_movie_expiry(self):
+        return int((datetime.now(self.timezone) + timedelta(days=MOVIE_MIN_DAYS)).timestamp())
+
+    def write(self, city, movies):
+        # Blokada obejmuje tylko lokalny zapis. Pobieranie HTTP odbywa się wcześniej.
+        # Chroni rozpoznawanie nowego filmu przed równoległym importem innego miasta.
+        with self.client.lock("kinowo:dedup-import-lock", timeout=300, blocking_timeout=30) as lock:
+            return self.write_locked(city, movies, lock)
+
+    def write_locked(self, city, movies, lock):
+        today = datetime.now(self.timezone).date()
+        records = list(read_json_keys(self.client, "movie:*"))
+        catalog = MovieCatalog({key[len("movie:"):]: document for key, document, _ in records})
+        resolved = []
+        aliases = {}
+        # Zwykły tytuł otrzymuje pierwszeństwo przed wariantem wydarzenia.
+        for movie in sorted(movies, key=lambda movie: (
+            movie.get("title") != base_title(movie.get("title")), movie["slug"]
+        )):
+            raw_alias = self.client.get("movie_alias:" + movie["slug"])
+            alias = raw_alias.decode() if isinstance(raw_alias, bytes) else raw_alias
+            canonical = catalog.resolve(movie, alias)
+            if canonical not in catalog.documents:
+                catalog.add(canonical, movie_document(movie, canonical))
+            aliases[movie["slug"]] = canonical
+            resolved.append(dict(movie, slug=canonical, source_slug=movie["slug"], source_title=movie.get("title")))
+
+        documents, schedules = build_redis_documents(city, resolved, self.timezone, today)
+        # Dokument filmu jest wspólny. Dane wydarzenia pozostają przy seansie.
+        documents = {key: catalog.documents[key[len("movie:"):]] for key in documents}
+        horizons = {key: self.minimum_movie_expiry() for key in documents}
+        for (_, expires), rows in schedules.items():
+            for row in rows:
+                movie_key = "movie:" + row["movie_id"]
+                # Policz dodatkowe dni w lokalnym kalendarzu, z uwzględnieniem DST.
+                schedule_day = datetime.fromtimestamp(expires, self.timezone).date()
+                horizon = self.midnight(schedule_day + timedelta(days=MOVIE_GRACE_DAYS))
+                horizons[movie_key] = max(horizons[movie_key], horizon)
+
+        lock.reacquire()
+        with self.client.pipeline(transaction=True) as pipeline:
+            for key, document in documents.items():
+                pipeline.execute_command("JSON.SET", key, "$", json.dumps(document, ensure_ascii=False), "NX")
+                extend_expiry(pipeline, key, horizons[key])
+            for source, canonical in aliases.items():
+                # Mapowanie ma co najmniej horyzont bieżącego importu.
+                alias_key = "movie_alias:" + source
+                pipeline.set(alias_key, canonical, keepttl=True)
+                extend_expiry(pipeline, alias_key, horizons["movie:" + canonical])
+            for (key, expires), rows in schedules.items():
+                pipeline.execute_command("JSON.SET", key, "$", json.dumps(rows, ensure_ascii=False))
+                pipeline.expireat(key, expires)
+            pipeline.execute()
+
+        reduced = len(movies) - len(documents)
+        return f"Redis ({len(schedules)} repertuarów, {len(documents)} filmów, połączono {reduced} wariantów)"
+
+
+def write_city_file(output_dir, city, movies):
+    path = output_dir / f"{city}.json"
+    write_json(movies, path)
+    return str(path)
+
+
+def describe_error(error):
+    if isinstance(error, HTTPError) and error.headers:
+        retry_after = error.headers.get("Retry-After")
+        if retry_after:
+            return f"{error} (Retry-After: {retry_after})"
+    return str(error)
+
+
+def export_cities(cities, save_city):
+    print(f"Miasta do pobrania: {len(cities)}", file=sys.stderr)
+    saved = 0
+    for index, (slug, url) in enumerate(cities.items(), 1):
+        # Przerwa obejmuje też przejście od mapy do pierwszej strony miasta.
+        sleep(REQUEST_PAUSE_SECONDS)
+        try:
+            movies = fetch_repertoire(url)
+            destination = save_city(slug, movies)
+        except (OSError, ValueError, HTTPException) as exc:
+            print(f"[{index}/{len(cities)}] {slug}: {describe_error(exc)}", file=sys.stderr)
+            if isinstance(exc, HTTPError) and exc.code in {403, 429}:
+                print("Kinowo ograniczyło dostęp. Zatrzymano pobieranie.", file=sys.stderr)
+                break
+        else:
+            saved += 1
+            count = sum(len(movie["showtimes"]) for movie in movies)
+            print(f"[{index}/{len(cities)}] {slug}: {destination} ({count} seansów w źródle)", file=sys.stderr)
+
+    print(f"Zapisano repertuar dla {saved}/{len(cities)} miast.", file=sys.stderr)
+    return int(saved != len(cities))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--html", type=Path, help="Wczytaj zapisany HTML lub fragment z pliku UTF-8.")
-    parser.add_argument("-o", "--output", type=Path, help="Zapisz JSON do pliku. Domyślnie wypisz go na ekran.")
+    parser.add_argument("--city", metavar="SLUG", help="Pobierz jedno miasto, np. krakow lub trojmiasto.")
+    output = parser.add_mutually_exclusive_group()
+    output.add_argument("--redis", action="store_true", help="Zapisz do Redis JSON (tryb domyślny).")
+    output.add_argument("--output-dir", type=Path, help="Zamiast Redisa zapisz osobne pliki JSON w tym folderze.")
+    output.add_argument("-o", "--output", type=Path, help="Zapisz pojedynczy JSON (domyślnie dla Warszawy).")
     args = parser.parse_args()
 
+    if args.city and not CITY_SLUG.fullmatch(args.city):
+        parser.error("--city wymaga identyfikatora z adresu Kinowo, np. poznan.")
+    slug = args.city or "warszawa"
+    city_url = urljoin(KINOWO_URL, slug + "/")
+
     try:
-        if args.html:
-            page, base_url = args.html.read_text(encoding="utf-8-sig"), REPERTORY_URL
-        else:
-            page, base_url = fetch_repertoire()
-        movies = parse_repertoire(page, base_url)
-        result = json.dumps(movies, ensure_ascii=False, indent=2) + "\n"
         if args.output:
-            args.output.write_text(result, encoding="utf-8")
+            write_json(fetch_repertoire(city_url), args.output)
+            return 0
+        if args.output_dir:
+            args.output_dir.mkdir(parents=True, exist_ok=True)
+            save_city = partial(write_city_file, args.output_dir)
         else:
-            sys.stdout.write(result)
-    except (OSError, ValueError, etree.LxmlError) as exc:
-        parser.exit(1, f"Błąd: {exc}\n")
+            try:
+                timezone = ZoneInfo("Europe/Warsaw")
+            except ZoneInfoNotFoundError as exc:
+                raise ValueError("Brak danych stref czasowych. Zainstaluj pakiet tzdata.") from exc
+            save_city = RedisMovieStore(connect_redis(), timezone).write
+        if args.city:
+            cities = {slug: city_url}
+        else:
+            sitemap, _ = fetch(SITEMAP_URL, "application/xml, text/xml")
+            cities = parse_city_urls(sitemap)
+        return export_cities(cities, save_city)
+    except REDIS_ERRORS as exc:
+        parser.exit(1, f"Błąd Redis: {exc}\n")
+    except (OSError, ValueError, HTTPException, ElementTree.ParseError) as exc:
+        parser.exit(1, f"Błąd: {describe_error(exc)}\n")
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

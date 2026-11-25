@@ -65,4 +65,4 @@ desktop.ini
 __pycache__/
 *.py[cod]
 
-data/*
+CinemaAgent/data/*

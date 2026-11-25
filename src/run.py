@@ -15,7 +15,7 @@ VENV_DIR = HERE / ".venv"
 
 # Selector flag -> script (change filenames to yours)
 TARGETS = {
-    "--fetch": SCRIPTS_DIR / "kinowo_scraper_dedup.py",
+    "--fetch": SCRIPTS_DIR / "kinowo_scraper.py",
     "--clear": SCRIPTS_DIR / "clear_kinowo_redis.py",
 }
 

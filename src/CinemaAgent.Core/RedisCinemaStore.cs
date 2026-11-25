@@ -6,7 +6,7 @@ namespace CinemaAgent.Storage;
 /// <summary>Dane z Redis JSON (zapisane przez kinowo_scraper.py --redis).</summary>
 public sealed class RedisCinemaStore : ICinemaStore
 {
-    private const string SchedulePattern = "*:*:*:????-??-??";
+    private const string SchedulePattern = "repertoire:*:*:*:????-??-??";
     private const string MoviePattern = "movie:*";
     private const int BatchSize = 128;
 
