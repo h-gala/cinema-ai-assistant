@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\CinemaAgent.Core\CinemaAgent.Core.csproj" />
@@ -8,6 +8,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>c2612933-6e4b-44e7-9e2e-9ad1ec75a18f</UserSecretsId>
   </PropertyGroup>
 
 </Project>

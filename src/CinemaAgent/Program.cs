@@ -16,7 +16,7 @@ var arguments = new Dictionary<string, string>();
 for (var i = 0; i < args.Length; i++)
 {
     var option = args[i];
-    if (option is not ("--model" or "--user" or "--data" or "--ask"))
+    if (option is not ("--model" or "--user" or "--data" or "--ask" or "--api-url"))
         continue;
 
     if (option == "--model" && (i + 1 == args.Length || string.IsNullOrWhiteSpace(args[i + 1])
@@ -30,6 +30,8 @@ for (var i = 0; i < args.Length; i++)
         arguments.TryAdd(option, args[++i]);
 }
 
+var useApi = args.Contains("--api");
+
 // Sztuczny czas z konfiguracji: wartość bez strefy traktujemy jako czas warszawski.
 static DateTimeOffset ParseNow(string value, TimeZoneInfo zone)
 {
@@ -42,6 +44,7 @@ static DateTimeOffset ParseNow(string value, TimeZoneInfo zone)
 var cfg = new ConfigurationBuilder()
     .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json")
+    .AddUserSecrets<Program>(optional: true)
     .AddEnvironmentVariables()
     .Build();
 
@@ -101,6 +104,7 @@ var now = TimeZoneInfo.ConvertTime(
 // Źródło danych: lokalne pliki JSON ze scrapera (--data <ścieżka> albo Data:LocalPath) lub Redis.
 var localData = arguments.GetValueOrDefault("--data") ?? cfg["Data:LocalPath"];
 ConnectionMultiplexer? redis = null;
+HttpClient? apiHttp = null;
 ICinemaStore store;
 if (!string.IsNullOrWhiteSpace(localData))
 {
@@ -113,6 +117,39 @@ if (!string.IsNullOrWhiteSpace(localData))
     catch (Exception ex) when (ex is IOException or InvalidDataException or JsonException)
     {
         Console.Error.WriteLine($"Nie można wczytać danych lokalnych ({localData}): {ex.Message}");
+        return 1;
+    }
+}
+else if (useApi)
+{
+    var baseUrl = arguments.GetValueOrDefault("--api-url") ?? cfg["CinemaApi:BaseUrl"];
+    var apiKey = cfg["CinemaApi:Key"];
+    if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
+    {
+        Console.Error.WriteLine("Brak konfiguracji API. Ustaw CinemaApi:BaseUrl i CinemaApi:Key " +
+                                "(appsettings.json lub zmienne CinemaApi__BaseUrl / CinemaApi__Key).");
+        return 1;
+    }
+
+    try
+    {
+        // Końcowy "/" jest ważny: bez niego ścieżki względne ("schedule-keys") gubią segment bazowy.
+        apiHttp = new HttpClient
+        {
+            BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/"),
+            Timeout = TimeSpan.FromSeconds(30)
+        };
+        apiHttp.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
+
+        using var health = await apiHttp.GetAsync("health");
+        health.EnsureSuccessStatusCode();
+        store = new HttpCinemaStore(apiHttp);
+        Console.WriteLine($"Źródło danych: API ({apiHttp.BaseAddress})");
+    }
+    catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or UriFormatException)
+    {
+        Console.Error.WriteLine($"Nie można połączyć się z API ({baseUrl}): {ex.Message}");
+        apiHttp?.Dispose();
         return 1;
     }
 }
@@ -132,6 +169,7 @@ else
 
 using (redis)
 {
+    using var _ = apiHttp;
     var cinemaTools = new CinemaTools(
         store,
         user,
