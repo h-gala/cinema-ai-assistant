@@ -7,48 +7,66 @@ Asystent AI pomagający zaplanować wyjście do kina małym grupom znajomych, uw
 cinema-ai-assistant/
 ├── README.md
 ├── docs/
-│   └── vision.md                  # wizja projektu
+│   └── vision.md                         # wizja i założenia projektu
 └── src/
-    ├── CinemaAgent.csproj
-    ├── CinemaAgent.sln
-    ├── appsettings.json           # model Ollama i konfiguracja agenta
-    ├── Program.cs                 # konfiguracja aplikacji i pętla rozmowy
-    ├── README.md                  # instalacja, uruchamianie i konfiguracja
-    ├── Agent/
-    │   ├── AgentLoop.cs           # pętla tool calling i wykonanie narzędzi
-    │   ├── AgentOptions.cs        # opcje modelu i agenta
-    │   ├── HistoryTrimmer.cs      # ograniczanie historii rozmowy
-    │   ├── SkillTools.cs          # narzędzie read_skill i katalog dozwolonych skilli
-    │   └── SystemPrompt.cs        # profil, bieżący czas, kalendarz i zasady bazowe
-    ├── Skills/                    # szczegółowe instrukcje wczytywane na żądanie
-    │   ├── age-appropriate/SKILL.md
-    │   ├── cinema-location/SKILL.md
-    │   ├── film-recommendation/SKILL.md
-    │   ├── movie-information/SKILL.md
-    │   ├── movie-language/SKILL.md
-    │   ├── screening-search/SKILL.md
-    │   └── ticket-links/SKILL.md
-    ├── Tools/
-    │   └── CinemaTools.cs         # find_cinemas, search_movies, get_screenings,
-    │                              # get_movie_details, get_movie_ratings,
-    │                              # get_ticket_url
-    ├── Services/
-    │   ├── CinemaRepository.cs    # wczytywanie i wyszukiwanie danych
-    │   └── TextUtil.cs            # dopasowanie tekstu i nazwy dni
-    ├── Storage/
-    │   ├── ICinemaStore.cs        # interfejs źródła danych
-    │   ├── LocalCinemaStore.cs    # lokalne pliki JSON
-    │   └── RedisCinemaStore.cs    # Redis JSON
-    ├── Models/
-    │   └── Models.cs              # modele kina, filmu, seansu i profilu
-    ├── Users/
-    │   └── UserProfiles.cs        # przykładowe profile użytkowników
-    ├── data/
-    │   └── kinowo/                # lokalne dane repertuarowe
-    ├── kinowo_scraper.py
-    ├── kinowo_scraper_redis.py    # pobieranie repertuaru do plików lub Redisa
-    ├── kinowo_scraper_wszystkie.py
-    └── requirements.txt
+    ├── CinemaAgent.sln                   # rozwiązanie .NET
+    │
+    ├── CinemaAgent.Api/
+    │   ├── CinemaAgent.Api.csproj        # projekt API
+    │   ├── Program.cs                    # konfiguracja i uruchomienie API
+    │   ├── appsettings.json              # konfiguracja API
+    │   └── Properties/
+    │       └── launchSettings.json       # profile uruchomieniowe
+    │
+    ├── CinemaAgent.Core/
+    │   ├── CinemaAgent.Core.csproj        # warstwa dostępu do danych
+    │   ├── ICinemaStore.cs               # interfejs magazynu danych kinowych
+    │   └── RedisCinemaStore.cs            # magazyn danych oparty o Redis
+    │
+    ├── CinemaAgent/
+    │   ├── CinemaAgent.csproj             # główny projekt agenta
+    │   ├── Program.cs                     # punkt wejścia aplikacji
+    │   ├── appsettings.json               # konfiguracja modelu i agenta
+    │   │
+    │   ├── Agent/
+    │   │   ├── AgentLoop.cs               # pętla agenta i obsługa tool calling
+    │   │   ├── AgentOptions.cs            # konfiguracja modelu i agenta
+    │   │   ├── HistoryTrimmer.cs           # ograniczanie historii rozmowy
+    │   │   ├── SkillTools.cs              # ładowanie skilli na żądanie
+    │   │   └── SystemPrompt.cs             # bazowe zasady i kontekst agenta
+    │   │
+    │   ├── Models/
+    │   │   └── Models.cs                  # modele domenowe kina, filmu i seansu
+    │   │
+    │   ├── Services/
+    │   │   ├── CinemaRepository.cs        # wyszukiwanie i dostęp do danych kinowych
+    │   │   └── TextUtil.cs                # pomocnicze operacje na tekście
+    │   │
+    │   ├── Skills/                        # szczegółowe instrukcje dla agenta
+    │   │   ├── age-appropriate/SKILL.md   # dobór treści odpowiednich wiekowo
+    │   │   ├── cinema-location/SKILL.md   # wyszukiwanie kin i lokalizacji
+    │   │   ├── film-recommendation/SKILL.md # rekomendowanie filmów
+    │   │   ├── movie-information/SKILL.md # informacje o filmach
+    │   │   ├── movie-language/SKILL.md    # język i wersje językowe filmów
+    │   │   ├── screening-search/SKILL.md  # wyszukiwanie seansów
+    │   │   └── ticket-links/SKILL.md      # linki do zakupu biletów
+    │   │
+    │   ├── Storage/
+    │   │   └── LocalCinemaStore.cs        # lokalny magazyn danych kinowych
+    │   │
+    │   ├── Tools/
+    │   │   └── CinemaTools.cs             # narzędzia dostępne dla agenta
+    │   │
+    │   └── Users/
+    │       └── UserProfiles.cs             # profile i preferencje użytkowników
+    │
+    ├── Scripts/
+    │   ├── clear_kinowo_redis.py          # czyszczenie danych w Redis
+    │   └── kinowo_scraper.py              # pobieranie danych repertuarowych
+    │
+    ├── requirements.txt                   # zależności Pythona
+    ├── run.py                             # skrypt uruchomieniowy / pomocniczy
+    └── .gitignore                         # reguły ignorowania plików w src/
 ```
 
 ## Uruchamianie
