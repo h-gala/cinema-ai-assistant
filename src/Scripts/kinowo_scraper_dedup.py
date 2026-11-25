@@ -47,7 +47,19 @@ RATING_SOURCES = {
     "filmweb": ("rating-fw", "rating-fw-value", 10),
 }
 SHOWTIME_PATTERN = re.compile(r"(?:[01]?\d|2[0-3]):[0-5]\d")
+SCHEDULE_PREFIX = "repertoire"
+SCHEDULE_PATTERN = f"{SCHEDULE_PREFIX}:*:*:*:????-??-??"
 
+
+def schedule_day(key):
+    """Zwraca dzień z klucza repertuaru albo None, jeśli to inny klucz."""
+    parts = key.split(":")
+    if len(parts) != 5 or parts[0] != SCHEDULE_PREFIX:
+        return None
+    try:
+        return date.fromisoformat(parts[-1])
+    except ValueError:
+        return None
 
 VOID_ELEMENTS = {
     "area", "base", "br", "col", "embed", "hr", "img", "input",
@@ -340,7 +352,7 @@ def build_redis_documents(city, movies, timezone, today):
                 raise ValueError(f"Brak nazwy kina dla seansu filmu {slug} ({day}).")
             # Zachowaj nazwę kina, kodując tylko separator klucza i znak ucieczki.
             cinema_key = cinema.replace("%", "%25").replace(":", "%3A")
-            key = f"{city}:{cinema_chain(cinema)}:{cinema_key}:{day.isoformat()}"
+            key = f"{SCHEDULE_PREFIX}:{city}:{cinema_chain(cinema)}:{cinema_key}:{day.isoformat()}"
             expires = int(datetime.combine(day + timedelta(days=1), time.min, timezone).timestamp())
             schedules[key, expires].append({
                 "movie_id": slug,
@@ -517,13 +529,9 @@ class RedisMovieStore:
         horizons = {key: self.minimum_movie_expiry() for key in persistent}
         # Stare dokumenty nie zawierają seansów. Ich ostatni dzień odczytujemy
         # ze wszystkich istniejących repertuarów, także z innych miast.
-        for key, rows, _ in read_json_keys(self.client, "*:*:*:????-??-??"):
-            parts = key.split(":")
-            if len(parts) != 4 or not isinstance(rows, list):
-                continue
-            try:
-                day = date.fromisoformat(parts[-1])
-            except ValueError:
+        for key, rows, _ in read_json_keys(self.client, SCHEDULE_PATTERN):
+            day = schedule_day(key)
+            if day is None or not isinstance(rows, list):
                 continue
             expires = self.midnight(day + timedelta(days=1 + MOVIE_GRACE_DAYS))
             for row in rows:
@@ -564,29 +572,11 @@ class RedisMovieStore:
                 horizons[canonical] = max(horizons.get(canonical, minimum), minimum, expires)
 
             schedules = []
-            for key, rows, expires in read_json_keys(self.client, "*:*:*:????-??-??"):
-                if len(key.split(":")) != 4 or not isinstance(rows, list):
-                    continue
-                try:
-                    day = date.fromisoformat(key.rsplit(":", 1)[-1])
-                except ValueError:
+            for key, rows, expires in read_json_keys(self.client, SCHEDULE_PATTERN):
+                day = schedule_day(key)
+                if day is None or not isinstance(rows, list):
                     continue
                 changed = False
-                for row in rows:
-                    source = row.get("movie_id")
-                    canonical = mapping.get(source)
-                    if canonical is None:
-                        continue
-                    if canonical != source:
-                        row.setdefault("source_slug", source)
-                        row.setdefault("source_title", original_titles[source])
-                        row["movie_id"] = canonical
-                        changed = True
-                    horizons[canonical] = max(
-                        horizons[canonical],
-                        self.midnight(day + timedelta(days=1 + MOVIE_GRACE_DAYS)),
-                        expires + MOVIE_GRACE_DAYS * 86400,
-                    )
                 if changed:
                     schedules.append((key, rows, expires))
 
